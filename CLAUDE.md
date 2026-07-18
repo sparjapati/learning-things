@@ -7,6 +7,7 @@ This is a personal learning project for exploring programming concepts.
 - When the user asks about a concept, explain it in the conversation with example with some real life analogies, then also write a summary of it to a markdown file.
 - Concept summary files live at the root of this directory (not in a subfolder).
 - File naming convention: kebab-case, e.g. `event-loop.md`.
+- Keep `README.md` continuously up to date as an index: whenever a concept file is created, add a one-line entry for it (linking the filename with a short description of what it covers). Whenever an existing concept file gains a new section that changes what it covers, update that file's description line in `README.md` to match.
 
 ## Handling related questions across sessions
 
