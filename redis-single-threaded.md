@@ -5,7 +5,7 @@
 Redis is an in-memory key-value data store. It keeps the entire dataset in RAM, which is why reads/writes are extremely fast (microsecond-level) compared to disk-backed databases like MySQL/MongoDB.
 
 - **Data structures, not just strings**: values can be strings, hashes, lists, sets, sorted sets, etc. — used for caching, session storage, leaderboards, rate limiting, pub/sub messaging.
-- **Persistence is optional but available**: Redis can snapshot to disk (RDB) or append every write to a log (AOF) so data survives a restart, even though the hot path for serving requests is all RAM. See [[redis-persistence-rdb-vs-aof]] for details.
+- **Persistence is optional but available**: Redis can snapshot to disk (RDB) or append every write to a log (AOF) so data survives a restart, even though the hot path for serving requests is all RAM. See [redis-persistence-rdb-vs-aof.md](redis-persistence-rdb-vs-aof.md) for details.
 - **Client-server model**: clients open a TCP connection and send commands (`GET`, `SET`, `LPUSH`, etc.); Redis processes them and replies.
 
 ## Why it's called "single-threaded"

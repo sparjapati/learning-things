@@ -1,6 +1,6 @@
 # Redis Persistence: RDB vs AOF
 
-See also: [[redis-single-threaded]] for how Redis works overall (this file expands on the "persistence" point mentioned there).
+See also: [redis-single-threaded.md](redis-single-threaded.md) for how Redis works overall (this file expands on the "persistence" point mentioned there).
 
 ## Why persistence exists at all
 
