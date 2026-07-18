@@ -8,6 +8,7 @@ This is a personal learning project for exploring programming concepts.
 - Concept summary files live at the root of this directory (not in a subfolder).
 - File naming convention: kebab-case, e.g. `event-loop.md`.
 - Keep `README.md` continuously up to date as an index: whenever a concept file is created, add a one-line entry for it (linking the filename with a short description of what it covers). Whenever an existing concept file gains a new section that changes what it covers, update that file's description line in `README.md` to match.
+- Diagrams or example images that help explain a concept go in the `images/` folder at the root of this directory, referenced from the concept's markdown file with a relative path (e.g. `images/qr-code-anatomy.png`).
 
 ## Handling related questions across sessions
 
