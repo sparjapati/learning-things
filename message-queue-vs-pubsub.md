@@ -46,3 +46,5 @@ Publisher → channel "news" → Subscriber A gets it
 ## Why the line can blur
 
 Some systems (Kafka, Redis Streams) combine both ideas — messages are persisted like a queue, and multiple independent consumer groups can each get their own full copy of the stream (broadcast-like), while within a consumer group messages are still distributed one-per-consumer (queue-like). So "queue vs pub/sub" is really about two separate properties — persistence, and one-vs-all delivery — and modern systems mix and match them rather than being purely one or the other.
+
+See also [async-transaction-confirmation.md](async-transaction-confirmation.md) for how a client finds out the result once patterns like these are used to process something asynchronously.
