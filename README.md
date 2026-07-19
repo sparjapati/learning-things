@@ -22,8 +22,11 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 
 - [kotlin/kotlin-contracts.md](kotlin/kotlin-contracts.md) — how Kotlin contracts (`returns(...) implies`, `callsInPlace`) let functions like `require()`, `isNullOrEmpty()`, and `run`/`let`/`apply` enable smart casts and definite-assignment checks the compiler couldn't otherwise infer, and why an incorrect contract is unsound (declared, not verified).
 
+## Java
+
+- [java/hashmap.md](java/hashmap.md) — how a HashMap achieves near-O(1) lookup via bucket arrays and a hash function, how collisions are chained (and tree-ified in Java 8+), resizing/load factor, and the hashCode/equals contract.
+
 ## General
 
-- [qr-codes.md](qr-codes.md) — how a QR code encodes data as a grid, its finder/alignment/timing patterns, and Reed-Solomon error correction.
-- [zip-file-format.md](zip-file-format.md) — ZIP compression (LZ77 + Huffman/DEFLATE) and the container format's per-file entries plus central directory.
-- [hashmap.md](hashmap.md) — how a HashMap achieves near-O(1) lookup via bucket arrays and a hash function, how collisions are chained (and tree-ified in Java 8+), resizing/load factor, and the hashCode/equals contract.
+- [general/qr-codes.md](general/qr-codes.md) — how a QR code encodes data as a grid, its finder/alignment/timing patterns, and Reed-Solomon error correction.
+- [general/zip-file-format.md](general/zip-file-format.md) — ZIP compression (LZ77 + Huffman/DEFLATE) and the container format's per-file entries plus central directory.
