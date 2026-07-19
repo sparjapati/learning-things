@@ -26,3 +26,4 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 
 - [qr-codes.md](qr-codes.md) — how a QR code encodes data as a grid, its finder/alignment/timing patterns, and Reed-Solomon error correction.
 - [zip-file-format.md](zip-file-format.md) — ZIP compression (LZ77 + Huffman/DEFLATE) and the container format's per-file entries plus central directory.
+- [hashmap.md](hashmap.md) — how a HashMap achieves near-O(1) lookup via bucket arrays and a hash function, how collisions are chained (and tree-ified in Java 8+), resizing/load factor, and the hashCode/equals contract.
