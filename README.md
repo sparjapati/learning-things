@@ -4,7 +4,9 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 
 ## General
 
+- [general/passkeys.md](general/passkeys.md) — what problem passkeys solve (eliminating the shared-secret weaknesses of passwords), how WebAuthn/FIDO2 registration and login work, why they resist phishing, and synced vs. device-bound passkeys.
 - [general/qr-codes.md](general/qr-codes.md) — how a QR code encodes data as a grid, its finder/alignment/timing patterns, and Reed-Solomon error correction.
+- [general/totp.md](general/totp.md) — how TOTP generates rotating 6-digit codes from a shared secret + time step (HOTP + HMAC-SHA1 under the hood), and why it's not phishing-resistant the way passkeys are.
 - [general/zip-file-format.md](general/zip-file-format.md) — ZIP compression (LZ77 + Huffman/DEFLATE) and the container format's per-file entries plus central directory.
 
 ## Java
@@ -27,6 +29,7 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 - [system-design/message-queue-vs-pubsub.md](system-design/message-queue-vs-pubsub.md) — message queues (one consumer per message) vs pub/sub (broadcast to all subscribers).
 - [system-design/monolith-vs-microservices.md](system-design/monolith-vs-microservices.md) — what "service" means (Order Service, Payment Service, etc.): independent processes/databases/deploy lifecycles talking over the network vs modules sharing one process in a monolith, plus a decision checklist for which to build.
 - [system-design/mysql-table-vs-mongo-document.md](system-design/mysql-table-vs-mongo-document.md) — how a MySQL table differs from a MongoDB document, despite both being field→value stores.
+- [system-design/rate-limiters.md](system-design/rate-limiters.md) — common rate limiting strategies (fixed window, sliding window log/counter, token bucket, leaky bucket) and Uber's distributed control-plane architecture (local probabilistic dropping instead of per-request Redis lookups).
 - [system-design/redis-persistence-rdb-vs-aof.md](system-design/redis-persistence-rdb-vs-aof.md) — Redis persistence: RDB snapshots vs AOF write log, trade-offs and when to use each.
 - [system-design/redis-single-threaded.md](system-design/redis-single-threaded.md) — how Redis works, why it's called single-threaded, why `INCR` is atomic, and use cases beyond caching.
 - [system-design/saga-pattern-compensating-transactions.md](system-design/saga-pattern-compensating-transactions.md) — the Saga pattern: handling a later step (e.g. payment) failing after an earlier step (e.g. order creation) already committed, via compensating transactions, orchestration vs choreography, how to decide between them, and idempotency.
