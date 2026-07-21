@@ -24,6 +24,7 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 ## System Design
 
 - [system-design/async-transaction-confirmation.md](system-design/async-transaction-confirmation.md) — how a mobile app learns whether an async, event-driven transaction (e.g. order/payment) succeeded or failed: polling, long polling, WebSocket/SSE push, and mobile push notifications.
+- [system-design/cap-theorem.md](system-design/cap-theorem.md) — CAP theorem: consistency vs availability vs partition tolerance, what a network partition actually is, a decision checklist for CP vs AP with worked examples (bank ledger, leader election, shopping cart, like counts), and example systems for each.
 - [system-design/choosing-sql-vs-nosql.md](system-design/choosing-sql-vs-nosql.md) — decision checklist for picking SQL vs NoSQL for a given problem, with an e-commerce example.
 - [system-design/idempotency.md](system-design/idempotency.md) — what idempotency means, where it shows up (HTTP methods, idempotency keys, at-least-once message delivery), the concrete mechanisms used to achieve it (dedup stores, conditional writes, unique constraints, inbox pattern), and client-generated vs server-issued keys with the "unused/consumed/unknown" three-state check needed to avoid re-processing or wrongly discarding retries.
 - [system-design/message-queue-vs-pubsub.md](system-design/message-queue-vs-pubsub.md) — message queues (one consumer per message) vs pub/sub (broadcast to all subscribers).
