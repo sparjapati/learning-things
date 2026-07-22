@@ -1,6 +1,6 @@
 # Spring Boot Request Lifecycle: Client to Database and Back
 
-How a single HTTP request travels through a Spring Boot app: Tomcat, filters, `DispatcherServlet`, interceptors, the controller, AOP, the service and repository layers — and back out, both on the happy path and when something throws.
+How a single HTTP request travels through a Spring Boot app: Tomcat, filters, `DispatcherServlet`, `RequestBodyAdvice`, interceptors, the controller, AOP, the service and repository layers — and back out via message converters and `ResponseBodyAdvice`, both on the happy path and when something throws. Also covers the supporting beans (`HandlerAdapter`, `WebMvcConfigurer`, `Validator`, `ConversionService`, `ObjectMapper`, CORS, async support) that make each step work.
 
 ## The forward path (request coming in)
 
@@ -11,7 +11,7 @@ How a single HTTP request travels through a Spring Boot app: Tomcat, filters, `D
 3. **DispatcherServlet**: itself just a `Servlet`, registered as the last stop in that filter chain. This is Spring MVC's *front controller* — the single entry point every request funnels through.
 4. **HandlerMapping**: `DispatcherServlet` asks a `HandlerMapping` (usually `RequestMappingHandlerMapping`) which controller method matches this URL + HTTP method, and which `HandlerInterceptor`s apply to this specific route.
 5. **Interceptors — `preHandle()`**: unlike filters, interceptors are Spring MVC-specific and only run for requests that matched a handler. Common use: authorization checks that need to know *which controller* is being called.
-6. **Argument resolution + message converters (deserialize)**: before the controller method runs, Spring builds its arguments. `@RequestBody` is resolved by asking an `HttpMessageConverter` (e.g. Jackson's `MappingJackson2HttpMessageConverter`) to turn raw JSON bytes into your DTO class. `@PathVariable`/`@RequestParam` are resolved separately.
+6. **Argument resolution, `RequestBodyAdvice`, and message converters (deserialize)**: before the controller method runs, Spring builds its arguments. For an `@RequestBody` parameter, `RequestResponseBodyMethodProcessor` first calls any registered `RequestBodyAdvice` bean's `beforeBodyRead()` — a chance to wrap or replace the raw input stream (e.g. decrypt the body) before anything else sees it. It then hands that stream to an `HttpMessageConverter` (e.g. Jackson's `MappingJackson2HttpMessageConverter`) to turn the raw JSON bytes into your DTO class, and finally calls the same advice's `afterBodyRead()` with the fully-converted object — a chance to mutate it (trim strings, normalize fields) before the controller ever sees it. If the body is empty, `handleEmptyBody()` runs instead, letting the advice supply a default object rather than `null`. `@PathVariable`/`@RequestParam` are resolved separately, via `ConversionService`/`Formatter` beans rather than message converters (see "Other important beans" below).
 7. **Controller**: your method runs, with all arguments already resolved.
 8. **AOP proxy**: if the controller calls a `@Transactional` service (or anything else AOP-advised — `@Cacheable`, a custom `@Aspect`), it isn't calling the real object directly — it's calling a Spring-generated proxy wrapping the real bean. The proxy runs "before" logic (start a transaction) before your actual code runs.
 9. **Service**: business logic executes, inside that proxy's wrapper.
@@ -31,6 +31,23 @@ public class RequestLoggingFilter implements Filter {
 public class AuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
         return isAuthorized(req, handler); // false short-circuits the request here
+    }
+}
+
+// 6. RequestBodyAdvice — input-side mirror of ResponseBodyAdvice, wraps the @RequestBody read
+@RestControllerAdvice
+class DecryptingBodyAdvice implements RequestBodyAdvice {
+    public boolean supports(MethodParameter param, Type targetType, Class<? extends HttpMessageConverter<?>> converterType) {
+        return true; // apply to every @RequestBody
+    }
+    public HttpInputMessage beforeBodyRead(HttpInputMessage input, ...) {
+        return decrypt(input); // runs before the message converter parses JSON
+    }
+    public Object afterBodyRead(Object body, ...) {
+        return body; // runs after conversion, before the controller sees it
+    }
+    public Object handleEmptyBody(Object body, ...) {
+        return body; // called instead of the above when there's no request body at all
     }
 }
 
@@ -102,6 +119,20 @@ The detail that's easy to miss: **whatever the `@ExceptionHandler` method return
 Think of an airport terminal. Tomcat is the terminal building itself — it lets any traveler in. Filters are the terminal-wide security checkpoint (ID check, metal detector) — every traveler passes through it, regardless of which airline they're flying; the checkpoint doesn't know or care about your specific flight. `DispatcherServlet` is the central information desk that reads your ticket and figures out which gate you belong to. Interceptors are that specific airline's check-in staff — they only see travelers on their flights, and can do things like verify your boarding pass before letting you toward the gate. The controller is the gate agent. AOP is a supervisor quietly wrapping every gate agent's shift with "open the log book, then close the log book" (a transaction) without the gate agent ever being aware of it. The service is the airline's operations desk doing the real work; the repository is the baggage/reservation system talking to the actual database of flights.
 
 On the way back, the message converter is the automatic boarding-pass printer turning your reservation record into a physical slip; `ResponseBodyAdvice` is a customs stamp applied to every outgoing passenger's paperwork, regardless of airline, right before they leave. If something goes wrong — your booking can't be found — you don't just get stuck; you get redirected to a customer service desk (the exception resolver) that hands you a *replacement* slip of paper (the error response), which still gets stamped by customs and passes back through the same terminal checkpoint on the way out.
+
+## Other important beans in the pipeline
+
+Beyond the components named in the steps above, these beans do most of the remaining heavy lifting and are worth recognizing by name:
+
+| Bean | Role |
+|---|---|
+| `HandlerAdapter` (`RequestMappingHandlerAdapter`) | `DispatcherServlet` never calls the controller directly — it delegates to this. It resolves every argument (via the registered `HandlerMethodArgumentResolver`s) and applies the return value (via `HandlerMethodReturnValueHandler`s), which is what actually triggers the message-converter steps. |
+| `WebMvcConfigurer` | The central customization hook — override its methods to register your own interceptors, message converters, CORS mappings, formatters, and argument resolvers in one place instead of scattering unrelated `@Bean` definitions. |
+| `Validator` (`LocalValidatorFactoryBean`) | Runs Bean Validation (`@Valid`/`@Validated`) against a resolved `@RequestBody`/`@ModelAttribute` argument, after `RequestBodyAdvice.afterBodyRead()` but before the controller runs. A failure throws `MethodArgumentNotValidException`, caught by `ExceptionHandlerExceptionResolver` like any other exception. |
+| `ConversionService` / `Formatter<T>` | Converts `@PathVariable`/`@RequestParam` strings into typed arguments (e.g. `"2024-01-01"` → `LocalDate`) — the non-body counterpart to `HttpMessageConverter`, used for anything that isn't a `@RequestBody`. |
+| `ObjectMapper` | The actual Jackson serializer/deserializer that `MappingJackson2HttpMessageConverter` delegates to for both directions. Customize it (naming strategy, date format, unknown-property handling) via a `Jackson2ObjectMapperBuilderCustomizer` bean rather than replacing the converter by hand. |
+| `CorsConfigurationSource` | The central CORS policy, consulted by `HandlerMapping` for preflight (`OPTIONS`) requests and by the CORS filter — configure allowed origins/methods once instead of scattering `@CrossOrigin` across controllers. |
+| `AsyncTaskExecutor` / `WebAsyncManager` | Backs async controller return types (`Callable<T>`, `DeferredResult<T>`, `CompletableFuture<T>`). The request thread is released back to Tomcat's pool while the work runs elsewhere; once it completes, the response resumes through the same interceptor/message-converter pipeline as any other request. |
 
 ## Common gotchas
 
