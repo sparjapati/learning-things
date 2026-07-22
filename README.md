@@ -2,12 +2,25 @@
 
 Personal notes on programming concepts, built up one question at a time. Notes are grouped into category folders; each category folder has its own `images/` subfolder for diagrams.
 
+## DSA
+
+- [dsa/dsa-prep-plan.md](dsa/dsa-prep-plan.md) — a 4-phase, 2–3 month DSA interview prep plan for someone who's covered most topics but lacks confidence applying them: overview of all 4 phases (Phase 1 detailed separately in phase-1-diagnostic.md), pattern-notebook drilling with interleaved practice, timed applied practice on curated lists, mock-heavy consolidation, plus common prep mistakes vs. what actually works.
+- [dsa/phase-1-diagnostic-tracker.csv](dsa/phase-1-diagnostic-tracker.csv) — ready-to-use tracking sheet for the Phase 1 diagnostic, pre-filled with all 36 problems (topic, problem, difficulty, time limit) mapped to their scheduled day; open in Excel/Sheets and fill in the remaining columns while practicing.
+- [dsa/phase-1-diagnostic.md](dsa/phase-1-diagnostic.md) — the full Phase 1 diagnostic: rules for each timed problem (25 min, closed-book, confidence 1–5 scoring), a 12-topic list with 3 representative problems each, a day-by-day 2-week schedule, the tracking sheet columns, and how to turn results into a Phase 2 weak-topic list.
+
 ## General
 
 - [general/passkeys.md](general/passkeys.md) — what problem passkeys solve (eliminating the shared-secret weaknesses of passwords), how WebAuthn/FIDO2 registration and login work, why they resist phishing, and synced vs. device-bound passkeys.
 - [general/qr-codes.md](general/qr-codes.md) — how a QR code encodes data as a grid, its finder/alignment/timing patterns, and Reed-Solomon error correction.
 - [general/totp.md](general/totp.md) — how TOTP generates rotating 6-digit codes from a shared secret + time step (HOTP + HMAC-SHA1 under the hood), and why it's not phishing-resistant the way passkeys are.
 - [general/zip-file-format.md](general/zip-file-format.md) — ZIP compression (LZ77 + Huffman/DEFLATE) and the container format's per-file entries plus central directory.
+
+## Interview Prep
+
+- [interview-prep/english-speaking-practice.md](interview-prep/english-speaking-practice.md) — improving spoken English fluency when comprehension is already strong (the receptive vs. productive skill gap): thinking in English instead of translating, shadowing, forced daily output, recording yourself, targeted pronunciation drilling, a progressive exposure ladder from self-talk to real interviews, a concrete daily/weekly routine with named tools (BBC 6 Minute English, Tandem/HelloTalk, ELSA Speak), and common mistakes vs. what actually works.
+- [interview-prep/recruiter-and-interviewer-responses.md](interview-prep/recruiter-and-interviewer-responses.md) — a running collection of common recruiter/interviewer prompts contrasting weak vs. high-value candidate responses (stating a scheduling preference while staying flexible; handling "do you have other competing offers?" without over-disclosing or losing leverage), with the signal each sends and the general principle behind it.
+- [interview-prep/remote-and-germany-job-search.md](interview-prep/remote-and-germany-job-search.md) — where to search for remote/German developer roles (global remote boards vs. Germany/English-speaking-specific ones), EU Blue Card visa thresholds and the IT shortage-occupation/no-degree path, gross-vs-net and remote-band comp differences, German interview-process/notice-period expectations, whether German is actually required, and weak-vs-high-value answers for the visa/language/relocation questions.
+- [interview-prep/salary-negotiation-strategy.md](interview-prep/salary-negotiation-strategy.md) — how to arrive at a CTC ask for an India job switch: why to anchor off current CTC rather than in-hand pay, hike-percentage benchmarks by switch type (services-to-services, services-to-product, specialized stacks), a worked example, where to actually check compensation data filtered by experience and skills (Naukri Salary Predictor, PayScale, AmbitionBox, Levels.fyi, Glassdoor, Blind/Grapevine), and why generic "average salary" blog aggregators are unreliable.
 
 ## Java
 
@@ -39,3 +52,7 @@ Personal notes on programming concepts, built up one question at a time. Notes a
 - [system-design/redis-persistence-rdb-vs-aof.md](system-design/redis-persistence-rdb-vs-aof.md) — Redis persistence: RDB snapshots vs AOF write log, trade-offs and when to use each.
 - [system-design/redis-single-threaded.md](system-design/redis-single-threaded.md) — how Redis works, why it's called single-threaded, why `INCR` is atomic, and use cases beyond caching.
 - [system-design/saga-pattern-compensating-transactions.md](system-design/saga-pattern-compensating-transactions.md) — the Saga pattern: handling a later step (e.g. payment) failing after an earlier step (e.g. order creation) already committed, via compensating transactions, orchestration vs choreography, how to decide between them, and idempotency.
+
+## To Be Revised
+
+- [spring-boot/sql-injection-protection.md](spring-boot/sql-injection-protection.md)
