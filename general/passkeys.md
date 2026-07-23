@@ -20,6 +20,8 @@ Instead of a shared secret, a passkey is a **key pair**: a private key that neve
 
 ![Passkey registration: server sends a challenge, the device's authenticator generates a new key pair and signs the challenge, the browser returns the public key which the server stores](images/passkey-registration.png)
 
+Editable version (Eraser.io): [Passkey Registration Flow](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=s1YzEp8TOwQvRC32ATXE&layout=canvas).
+
 1. The site ("relying party") sends the browser a random challenge plus its own domain identity.
 2. The browser calls the WebAuthn API, which hands off to an authenticator — the device's secure enclave (Face ID/Touch ID/Windows Hello) or an external key.
 3. The authenticator generates a brand-new key pair specific to this site and this account, signs the challenge with the new private key, and returns the public key to the browser.
@@ -28,6 +30,8 @@ Instead of a shared secret, a passkey is a **key pair**: a private key that neve
 ### Authentication (logging in)
 
 ![Passkey authentication: server sends a fresh challenge, the device unlocks the private key locally and signs it, the server verifies the signature against the stored public key](images/passkey-authentication.png)
+
+Editable version (Eraser.io): [Passkey Authentication Flow](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=tNCgl4xopyB8Wd2JUXtx&layout=canvas).
 
 1. The server sends a fresh random challenge.
 2. The browser asks the OS for a passkey matching this exact domain; the OS prompts you to unlock it locally (fingerprint, face, or PIN) — this unlock never leaves the device either.

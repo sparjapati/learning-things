@@ -12,6 +12,8 @@ Instead of one atomic transaction, the flow is modeled as a chain of local trans
 
 ![Saga flow: order created, stock reserved, payment fails, then compensating actions release stock and cancel the order](images/saga-compensating-transactions.png)
 
+Editable version (Eraser.io): [Saga: Compensating Transactions on Failure](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=qXBkFeohDSd-pHKB8rgP&layout=canvas).
+
 1. Order Service creates the order, `status = PENDING` (local commit).
 2. Inventory Service reserves stock for the order (local commit). Compensating action: release the reserved stock.
 3. Payment Service charges the card — fails.
@@ -22,6 +24,8 @@ Instead of one atomic transaction, the flow is modeled as a chain of local trans
 Both are ways to run a saga's steps and compensations. The difference is where the "brain" of the workflow lives.
 
 ![Orchestration as a star topology with a central coordinator vs choreography as services publishing/subscribing on a shared event bus with no center](images/orchestration-vs-choreography.png)
+
+Editable version (Eraser.io): [Orchestration vs. Choreography](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=JcjpWd4L-0q0rLs81MWx&layout=canvas).
 
 ### Orchestration — one coordinator directs everyone
 

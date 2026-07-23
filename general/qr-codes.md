@@ -16,6 +16,8 @@ Analogy: it's Morse code laid out in space instead of time — dots and dashes b
 
 ![QR code anatomy: finder, timing, and alignment patterns highlighted](images/qr-code-anatomy.png)
 
+Editable version (Eraser.io): [QR Code Anatomy](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=zs_ynhKn5YwcKq-k5Ugb&layout=canvas).
+
 ## Analogy for the whole thing
 
 A QR code is a jigsaw-puzzle photo of a sentence, printed with spare puzzle pieces baked in. The three corner bullseyes are landmark pieces telling you which way is "up" and how big the picture is. Even if part of the puzzle is missing or smudged, the spare pieces (error correction) let the scanner reconstruct the full sentence anyway.

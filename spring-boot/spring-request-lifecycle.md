@@ -2,9 +2,11 @@
 
 How a single HTTP request travels through a Spring Boot app: Tomcat, filters, `DispatcherServlet`, `RequestBodyAdvice`, interceptors, the controller, AOP, the service and repository layers — and back out via message converters and `ResponseBodyAdvice`, both on the happy path and when something throws. Also covers the supporting beans (`HandlerAdapter`, `WebMvcConfigurer`, `Validator`, `ConversionService`, `ObjectMapper`, CORS, async support) that make each step work.
 
-## The forward path (request coming in)
+![All three paths in one diagram: forward path (Tomcat through Controller/Service/Repository), the happy return path, and the exception path via HandlerExceptionResolvers, all rejoining the same message-converter/ResponseBodyAdvice pipeline](images/spring-request-lifecycle-eraser.png)
 
-![Happy path: request flowing down through Tomcat, filters, DispatcherServlet, interceptors, controller, AOP, service, repository, and the mirrored response flowing back up](images/spring-request-lifecycle-happy-path.png)
+Editable version (Eraser.io): [Spring Boot Request Lifecycle](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=S9_Mqhh6nfC8pv5etzj9&layout=canvas).
+
+## The forward path (request coming in)
 
 1. **Client → Tomcat**: the embedded servlet container accepts the raw HTTP connection and hands the request into the servlet pipeline. Tomcat doesn't know anything about Spring yet — it only knows "servlets" and "filters."
 2. **Filters** (`jakarta.servlet.Filter`): a chain of filters runs before Spring MVC gets involved at all. Filters are part of the servlet spec, not Spring-specific — the same mechanism exists in any Java EE app. Typical uses: CORS headers, request logging, auth token extraction, wrapping request/response streams for later re-reading.
@@ -91,8 +93,6 @@ class EnvelopeAdvice implements ResponseBodyAdvice<Object> {
 ```
 
 ## The exception path
-
-![Exception path: an exception thrown anywhere propagates to DispatcherServlet's HandlerExceptionResolver chain, then rejoins the same message-converter and interceptor pipeline as the happy path](images/spring-request-lifecycle-exception-path.png)
 
 An exception can be thrown from the controller, the service, the repository, or the AOP proxy itself (e.g. a `@Transactional` rollback). Wherever it happens, it propagates up as a normal Java exception through the AOP proxy — which sees it and rolls back the transaction instead of committing — and out of the controller method. It never reaches steps 13-16 through the normal path.
 

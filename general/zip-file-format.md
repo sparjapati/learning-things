@@ -15,6 +15,8 @@ A ZIP archive isn't compressed as one giant blob. Each file is compressed indepe
 
 ![ZIP file container structure: per-file headers and data, followed by a central directory](images/zip-file-structure.png)
 
+Editable version (Eraser.io): [ZIP File Container Structure](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=oflIvfEWXt1gSB5wMQW4&layout=canvas).
+
 - Each **local file header** carries that entry's filename, compressed/uncompressed size, and a **CRC-32 checksum** — a fingerprint used to verify the data wasn't corrupted after decompression.
 - The **central directory**, appended at the very end, lists every entry along with its byte offset in the file. A ZIP reader jumps straight to the central directory, reads the table of contents, then seeks directly to just the file it wants — without decompressing everything else first. That's why extracting a single file from a large ZIP is nearly instant instead of requiring a full pass through the archive.
 

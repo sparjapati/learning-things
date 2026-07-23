@@ -15,6 +15,8 @@ In microservices, they're split into genuinely separate deployable units:
 
 ![Monolith: modules in one process sharing one database vs Microservices: separate processes, separate databases, communicating over the network](images/monolith-vs-microservices.png)
 
+Editable version (Eraser.io): [Monolith vs. Microservices](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=kL4EHVD-SLJayo0Ud2od&layout=canvas).
+
 ## Real-life analogy
 
 Think of a company's departments — Sales, Warehouse, Finance. Each has its own office and its own filing cabinets that only that department can open directly. If Sales needs shipping status, they don't walk into the Warehouse and pull a file themselves — they send a memo (an API call) and wait for a reply. Each department can hire more staff or move offices without the others caring, as long as the memo format (the API contract) stays the same. That's a microservice.

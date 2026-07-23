@@ -6,7 +6,19 @@ Kotlin contracts let a function tell the compiler, in a formal way, something ab
 
 Kotlin's compiler can normally only smart-cast a variable to a non-null type when it can *see* the null check itself, right there in the code (`if (x != null) { ... }`). The moment that check happens *inside a function call* — `require(x != null)` — the compiler, from the outside, just sees "a function was called that returned `Unit`." It has no way to know that the function's contract is "if this returns normally, the condition you passed in was true."
 
-![Without a contract the compiler can't smart-cast after require(); with a contract on require() declaring that returning normally implies the condition held, it can](images/kotlin-contracts-smart-cast.png)
+```kotlin
+// Without a contract on require(), this would be a compile error:
+fun withoutContract(x: String?) {
+    require(x != null)
+    println(x.length) // hypothetically: compile error — x is still seen as String?
+}
+
+// With require()'s actual contract (`returns() implies value`), this compiles:
+fun withContract(x: String?) {
+    require(x != null)
+    println(x.length) // smart-cast to non-null String — the compiler trusts require()'s contract
+}
+```
 
 Contracts are the mechanism that closes that gap — they let the standard library (and your own code) declare that relationship explicitly, so the compiler can trust it.
 

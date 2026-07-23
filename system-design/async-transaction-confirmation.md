@@ -13,6 +13,8 @@ In an event-driven backend, placing an order usually isn't processed end-to-end 
 
 ![Async order/payment confirmation flow: app to order service to broker to payment service, result flowing back via a notification channel](images/async-transaction-confirmation.png)
 
+Editable version (Eraser.io): [Async Order/Payment Confirmation Flow](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=0M_y7ELs2iDnWT_fmCFS&layout=canvas).
+
 The original HTTP request only ever got an acknowledgment ("received, here's your order ID"), not the outcome — the outcome is decided downstream, on its own timeline. That's the trade-off of event-driven systems: scalability and resilience, in exchange for the caller no longer knowing the result synchronously.
 
 (What if `PaymentFailed` happens after the order was already created? See [saga-pattern-compensating-transactions.md](saga-pattern-compensating-transactions.md) for how the backend stays consistent when a later step fails after an earlier one already committed.)

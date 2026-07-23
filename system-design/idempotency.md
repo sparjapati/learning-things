@@ -4,6 +4,8 @@ An operation is **idempotent** if doing it once and doing it many times (with th
 
 ![Idempotent PUT converges to the same state on every call; non-idempotent POST creates a new order on every call](images/idempotency.png)
 
+Editable version (Eraser.io): [Idempotent PUT vs. Non-Idempotent POST](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=uum9gJzK-Rmo7h68XYO5&layout=canvas).
+
 ## Real-life analogy
 
 Pressing an elevator call button. Press it once, the elevator is summoned. Pressing it five more times while you wait doesn't summon five elevators — it's already coming, so the extra presses do nothing extra. That's idempotent. Compare that to repeatedly hitting "submit" on a payment form where each click charges your card again — that's not idempotent, and it's exactly the kind of bug idempotency is meant to prevent.

@@ -4,6 +4,8 @@ The core trick: instead of searching through every entry to find a key (O(n)), a
 
 ![HashMap bucket array: apple and plum hash to the same bucket and get chained together; pear hashes to a different bucket](images/hashmap-buckets-and-collisions.png)
 
+Editable version (Eraser.io): [HashMap Bucket Array and Collisions](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=tlibI-xY7Wq4OXmsR6QI&layout=canvas).
+
 ## The mechanism
 
 1. **A backing array of "buckets"**: internally, a HashMap holds a fixed-size array. Each slot ("bucket") can hold one or more key-value pairs.

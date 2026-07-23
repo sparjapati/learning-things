@@ -8,6 +8,8 @@ TOTP (RFC 6238) is the algorithm behind the rotating 6-digit codes from apps lik
 
 ![Both the authenticator app and the server independently compute HMAC-SHA1 over the same shared secret and time step, arriving at the same 6-digit code without any network call](images/totp-shared-secret-time-step.png)
 
+Editable version (Eraser.io): [TOTP: Independent Computation from a Shared Secret](https://app.eraser.io/workspace/JLgRjFjapzOnrAqixpQO?diagram=uf5TlLTiAW7_44fIoVnF&layout=canvas).
+
 1. **Enrollment**: when you turn on 2FA, the server generates a random secret and shows it to you as a QR code (encoding a URI like `otpauth://totp/Example:alice@example.com?secret=BASE32SECRET&issuer=Example`). Your authenticator app scans it and stores that same secret. From this point on, server and app both hold an identical copy.
 2. **Time steps**: time is divided into fixed 30-second intervals. The current "time step" is just `floor(current_unix_time / 30)` — an integer that both sides can compute independently, with no network call, as long as their clocks are roughly in sync.
 3. **The algorithm (it's HOTP underneath)**: TOTP is literally HOTP (HMAC-based OTP, RFC 4226) with the usual incrementing counter replaced by that time step. Compute `HMAC-SHA1(secret, time_step)` to get a 20-byte hash, then "dynamic truncation" pulls out a 4-byte chunk (at an offset determined by the hash's own last nibble), interprets it as a number, and takes it mod 10⁶ to get a 6-digit code.
