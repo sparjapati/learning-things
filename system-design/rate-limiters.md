@@ -21,6 +21,8 @@ The rate limiter should:
 - Minimize latency added to every request.
 - Avoid centralized bottlenecks.
 
+Rate limiting is one of the backstops used to survive a [thundering herd / cache stampede](thundering-herd-problem.md) once a request storm is already underway — it caps concurrent load rather than preventing the storm itself. Rate limiter state (tokens, counters) is itself commonly stored in a cache like Redis — see [caching-fundamentals.md](caching-fundamentals.md).
+
 ---
 
 # Common Rate Limiting Strategies

@@ -4,6 +4,8 @@
 
 Not directly — there's no Spring Boot filter, annotation, or "SQL sanitizer" scanning your queries for attacks. What actually protects you is **parameterized queries** (prepared statements), and Spring Data JPA/`JdbcTemplate` generate those automatically *when used as intended*. The protection comes from how the query-building abstractions work, not from a bolted-on security feature — and it's entirely possible to write SQL-injection-vulnerable code inside a Spring Boot app if you bypass those abstractions with string concatenation.
 
+See [spring-boot/jpa-hibernate-spring-data-stack.md](jpa-hibernate-spring-data-stack.md) for how Spring Data JPA, JPA, Hibernate, and JDBC layer on top of each other — that layering is *why* Spring Data JPA queries end up parameterized by default.
+
 Spring Security (authentication/authorization) is a separate concern entirely — it has nothing to do with SQL injection, which is purely about how a query string and its data get sent to the database.
 
 ## What a prepared statement actually is
