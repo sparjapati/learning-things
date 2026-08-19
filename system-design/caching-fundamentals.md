@@ -41,6 +41,146 @@ Each layer that hits (returns data without going further) short-circuits everyth
 | Is write throughput critical, and is losing the very latest write on crash tolerable? | Write-behind | View counts, high-volume metrics |
 | Is written data rarely read again right away? | Write-around | Bulk imports, audit logs |
 
+## Which pattern does Spring's caching abstraction use?
+
+Spring's `org.springframework.cache` abstraction (`@Cacheable`, `@CachePut`, `@CacheEvict`) doesn't pick one pattern — it's a generic AOP proxy wrapped around your method, and which pattern you get depends on which annotation you apply where.
+
+| Annotation | Pattern | How the proxy actually behaves |
+|---|---|---|
+| `@Cacheable` | Read-through | Checks the cache first. On a **hit**, your method body never runs. On a **miss**, it invokes your method, then stores the result in the cache before returning it. |
+| `@CachePut` | Write-through | Always invokes your method (e.g. `repository.save(...)`), then synchronously writes the result into the cache — DB write and cache write both complete before the call returns. |
+| `@CacheEvict` | Explicit invalidation | Invokes your method (typically a delete/update), then removes the entry (or clears the whole region with `allEntries=true`). It doesn't repopulate — the next `@Cacheable` read lazily reloads it. |
+
+Being read-through, `@Cacheable` has no built-in protection against a [thundering herd](thundering-herd-problem.md#does-springs-cacheable-protect-against-this) on expiry unless you opt into `sync = true`, which only collapses the herd within a single JVM instance — not across replicas.
+
+```kotlin
+@Cacheable(value = "users", key = "#id")       // read-through
+fun getUser(id: Long): User = userRepository.findById(id)...
+
+@CachePut(value = "users", key = "#user.id")   // write-through
+fun updateUser(user: User): User = userRepository.save(user)
+
+@CacheEvict(value = "users", key = "#id")      // explicit invalidation
+fun deleteUser(id: Long) = userRepository.deleteById(id)
+```
+
+The most common real-world combo is `@Cacheable` on reads + `@CacheEvict` on writes — read-through reads, with writes just invalidating rather than repopulating (closer to cache-aside's write behavior). `@CachePut` is used instead when you already have the fresh value in hand and want to skip the extra evict-then-reload round trip.
+
+Two things it doesn't give out of the box:
+- **No write-behind** — no built-in async/deferred-write pattern; you'd have to build it yourself (e.g. `@Async` + `@CachePut`, or a provider-specific write-behind cache).
+- **No eviction policy by default** — the default `ConcurrentMapCacheManager` never expires or evicts anything; entries live forever unless explicitly `@CacheEvict`'d. LRU/LFU/TTL only appear once a real provider (Caffeine, EhCache, Redis) backs the `CacheManager`.
+
+## Implementing each pattern with Spring's caching library
+
+Shared setup for every example below:
+
+```kotlin
+@Configuration
+@EnableCaching
+class CacheConfig {
+    @Bean
+    fun cacheManager(): CacheManager = ConcurrentMapCacheManager("users")
+}
+```
+
+### Read-through — `@Cacheable`
+
+```kotlin
+@Service
+class UserReadThroughService(private val userRepository: UserRepository) {
+    @Cacheable(value = "users", key = "#id")
+    fun getUser(id: Long): User =
+        userRepository.findById(id).orElseThrow { EntityNotFoundException("User $id not found") }
+}
+```
+The caller never manages the cache — the AOP proxy owns the check-then-load-then-populate sequence entirely.
+
+### Cache-aside (lazy loading) — manual `Cache` API
+
+Spring has no annotation for this, because `@Cacheable` already gives you the transparent version. To make the *app* own the check-then-populate logic instead of the proxy, go through `CacheManager` directly:
+
+```kotlin
+@Service
+class UserCacheAsideService(
+    private val cacheManager: CacheManager,
+    private val userRepository: UserRepository
+) {
+    fun getUser(id: Long): User {
+        val cache = cacheManager.getCache("users")!!
+        cache.get(id, User::class.java)?.let { return it }          // 1. app checks cache itself
+
+        val user = userRepository.findById(id)                       // 2. app reads DB itself
+            .orElseThrow { EntityNotFoundException("User $id not found") }
+
+        cache.put(id, user)                                           // 3. app populates cache itself
+        return user
+    }
+}
+```
+Functionally near-identical to `@Cacheable` for this simple case — the real difference shows up when populating the cache needs extra logic (e.g. only caching under some condition, or loading from a fallback source on miss) that doesn't fit cleanly into an annotation.
+
+### Write-through — `@CachePut`
+
+```kotlin
+@Service
+class UserWriteThroughService(private val userRepository: UserRepository) {
+    @CachePut(value = "users", key = "#user.id")
+    fun updateUser(user: User): User = userRepository.save(user)
+}
+```
+Every call updates the DB (inside the method) and the cache (via the annotation) synchronously, before returning.
+
+### Write-behind (write-back) — not built in, hand-rolled with `@Async`
+
+```kotlin
+@Configuration
+@EnableAsync
+class AsyncConfig
+
+@Service
+class UserWriteBehindService(
+    private val cacheManager: CacheManager,
+    private val userRepository: UserRepository
+) {
+    fun updateUser(user: User) {
+        cacheManager.getCache("users")!!.put(user.id, user)   // 1. cache updated immediately — fast return
+        persistAsync(user)                                     // 2. DB write deferred to a background thread
+    }
+
+    @Async
+    fun persistAsync(user: User) {
+        userRepository.save(user)                              // 3. actual DB write happens later
+    }
+}
+```
+If the process crashes between steps 1 and 3, that write is lost — this is the write-behind trade-off from the earlier table; Spring gives you no protection against it here, you're building the risk yourself.
+
+### Write-around — bypass the cache on write entirely
+
+```kotlin
+@Service
+class UserWriteAroundService(private val userRepository: UserRepository) {
+
+    fun bulkImportUsers(users: List<User>) {
+        userRepository.saveAll(users)                          // straight to DB, cache untouched
+    }
+
+    @Cacheable(value = "users", key = "#id")                   // reads still populate lazily
+    fun getUser(id: Long): User =
+        userRepository.findById(id).orElseThrow { EntityNotFoundException("User $id not found") }
+}
+```
+
+### Quick reference
+
+| Pattern | Spring mechanism |
+|---|---|
+| Cache-aside | Manual `CacheManager`/`Cache.get()` + `.put()` — you write the check-then-populate logic |
+| Read-through | `@Cacheable` — the AOP proxy owns check-then-populate |
+| Write-through | `@CachePut` — always runs the method, then syncs the cache |
+| Write-behind | Not built in — `@Async` + manual `Cache.put()`, DB write deferred |
+| Write-around | Plain repository call for writes, no cache annotation at all; reads still use `@Cacheable`/cache-aside |
+
 ## Eviction policies — what gets thrown out when the cache is full
 
 **Analogy**: a fridge with limited shelf space.
@@ -63,3 +203,7 @@ Each layer that hits (returns data without going further) short-circuits everyth
 - A hot cache key expiring under heavy concurrent traffic is exactly the [thundering herd / cache stampede problem](thundering-herd-problem.md).
 - [Redis](redis-single-threaded.md) and Memcached are the most common distributed-cache technologies; see [redis-persistence-rdb-vs-aof.md](redis-persistence-rdb-vs-aof.md) for how a cache that also needs to survive a restart persists data.
 - Rate limiters ([rate-limiters.md](rate-limiters.md)) often store their own counters/tokens in a cache like Redis.
+
+## Just for fun
+
+A database query walks into a bar. The bartender says, "Cash only."

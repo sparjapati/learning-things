@@ -38,6 +38,14 @@ The name is literal: a herd of animals grazing calmly reacts to a single stimulu
 | **Proactive background refresh** | A scheduled job refreshes known hot keys before they'd ever expire under load | Cache-warming jobs for a homepage/trending feed |
 | **Exponential backoff + jitter (client side)** | Prevents synchronized retry storms after a transient failure | AWS SDK's default retry policy |
 
+## Does Spring's `@Cacheable` protect against this?
+
+Not by default. Plain `@Cacheable` has no per-key locking — on expiry, every concurrent caller misses independently and hits the underlying method (and therefore the DB) at the same instant.
+
+Spring does offer an opt-in single-flight lock: `@Cacheable(value = "users", key = "#id", sync = true)`. This switches to the cache's `get(key, Callable)` method, which blocks concurrent callers for the *same key* on whichever thread got there first — exactly the single-flight pattern above, built in.
+
+**The catch: it's scoped to one JVM.** `sync = true` fully collapses the herd within a single running instance, but replicas don't coordinate with each other — a fleet of 5 replicas can still produce up to 5 concurrent DB calls for the same key at the same instant. It also can't be combined with multiple cache names or with `unless` (only `condition` is allowed). Eliminating the herd fleet-wide needs an actual distributed lock (e.g. a Redis `SETNX`-based mutex around the load step), not something `@Cacheable` provides on its own. See [caching-fundamentals.md](caching-fundamentals.md#which-pattern-does-springs-caching-abstraction-use) for how `@Cacheable`/`@CachePut`/`@CacheEvict` map to the caching patterns overall.
+
 ## Decision: which mitigation fits your system?
 
 | Question | If yes → | Real-life example |

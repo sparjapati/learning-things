@@ -8,6 +8,8 @@ Editable version (Eraser.io): [Spring Boot Request Lifecycle](https://app.eraser
 
 ## The forward path (request coming in)
 
+See [http-connections-and-tomcat-threading.md](http-connections-and-tomcat-threading.md) for what happens *before* step 1 below — TCP/TLS keep-alive, HTTP/2 streams, and how Tomcat's poller threads decide when a worker thread picks up the request.
+
 1. **Client → Tomcat**: the embedded servlet container accepts the raw HTTP connection and hands the request into the servlet pipeline. Tomcat doesn't know anything about Spring yet — it only knows "servlets" and "filters."
 2. **Filters** (`jakarta.servlet.Filter`): a chain of filters runs before Spring MVC gets involved at all. Filters are part of the servlet spec, not Spring-specific — the same mechanism exists in any Java EE app. Typical uses: CORS headers, request logging, auth token extraction, wrapping request/response streams for later re-reading.
 3. **DispatcherServlet**: itself just a `Servlet`, registered as the last stop in that filter chain. This is Spring MVC's *front controller* — the single entry point every request funnels through.
