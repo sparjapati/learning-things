@@ -1,5 +1,10 @@
 # Spring Boot Request Lifecycle: Client to Database and Back
 
+> "Write programs that do one thing and do it well. Write programs to work together."
+> — Doug McIlroy, the Unix philosophy
+>
+> *Filters, interceptors, advices, converters: a pipeline of small single-purpose pieces.*
+
 How a single HTTP request travels through a Spring Boot app: Tomcat, filters, `DispatcherServlet`, `RequestBodyAdvice`, interceptors, the controller, AOP, the service and repository layers — and back out via message converters and `ResponseBodyAdvice`, both on the happy path and when something throws. Also covers the supporting beans (`HandlerAdapter`, `WebMvcConfigurer`, `Validator`, `ConversionService`, `ObjectMapper`, CORS, async support) that make each step work.
 
 ![All three paths in one diagram: forward path (Tomcat through Controller/Service/Repository), the happy return path, and the exception path via HandlerExceptionResolvers, all rejoining the same message-converter/ResponseBodyAdvice pipeline](images/spring-request-lifecycle-eraser.png)

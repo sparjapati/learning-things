@@ -1,5 +1,8 @@
 # Caching Fundamentals
 
+> "There are only two hard things in Computer Science: cache invalidation and naming things."
+> — Phil Karlton
+
 ## What a cache actually is
 
 A cache is a smaller, faster store sitting in front of a slower, authoritative source of truth, holding copies of frequently-accessed data so most requests never reach the slow source. It trades a small staleness/memory cost for a large latency win.

@@ -1,5 +1,10 @@
 # Idempotency
 
+> "Insanity is doing the same thing over and over again and expecting different results."
+> — widely misattributed to Albert Einstein
+>
+> *Idempotency is the sane inverse: do the same thing over and over and expect exactly the same result.*
+
 An operation is **idempotent** if doing it once and doing it many times (with the same input) leave the system in exactly the same end state — repeating it doesn't pile up extra side effects.
 
 ![Idempotent PUT converges to the same state on every call; non-idempotent POST creates a new order on every call](images/idempotency.png)

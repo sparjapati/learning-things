@@ -1,5 +1,10 @@
 # Why Java Needs Garbage Collection but C++ Doesn't
 
+> "C makes it easy to shoot yourself in the foot; C++ makes it harder, but when you do, it blows your whole leg off."
+> — Bjarne Stroustrup
+>
+> *Manual memory management is the loaded end of that gun — and the reason Java chose a collector instead.*
+
 See also: [java-memory-management.md](java-memory-management.md) for *where* things actually live in the JVM — stack vs. heap for local variables, the method area/metaspace, and the string pool — as opposed to this file's focus on *why* reclamation works the way it does.
 
 ## The core question

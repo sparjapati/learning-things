@@ -1,5 +1,10 @@
 # How a Mobile App Confirms an Async Transaction Succeeded or Failed
 
+> "A watched pot never boils."
+> — proverb
+>
+> *Polling is watching the pot; most of this note is about getting the kitchen to call you instead.*
+
 See also: [message-queue-vs-pubsub.md](message-queue-vs-pubsub.md) for the broker mechanics between services — this file covers the layer above that: how the *client* eventually learns the outcome.
 
 ## The core issue

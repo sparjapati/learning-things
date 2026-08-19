@@ -1,5 +1,10 @@
 # Choosing SQL (MySQL) vs NoSQL (MongoDB) for a Problem
 
+> "Show me your flowcharts and conceal your tables, and I shall be continually mystified. Show me your tables, and I won't usually need your flowcharts; they'll be obvious."
+> — Fred Brooks, *The Mythical Man-Month*
+>
+> *Which is why this decision starts from the data's shape and access patterns, not from the framework.*
+
 See also: [mysql-table-vs-mongo-document.md](mysql-table-vs-mongo-document.md) for the structural differences, and [cap-theorem.md](cap-theorem.md) for the theoretical tradeoff behind why distributed NoSQL stores favor availability over strict consistency.
 
 This isn't a single rule — it's a checklist you weigh together against your actual access pattern.

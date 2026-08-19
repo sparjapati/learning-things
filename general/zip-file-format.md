@@ -1,5 +1,10 @@
 # How a ZIP File Works
 
+> "Information is the resolution of uncertainty."
+> — Claude Shannon
+>
+> *Compression works by removing everything that was never uncertain: repetition and predictability.*
+
 A ZIP file bundles two separate ideas: a **compression algorithm** that shrinks each file's data, and a **container format** that packs multiple compressed files into one archive with a lookup table for finding them again.
 
 ## Compression — DEFLATE (LZ77 + Huffman coding)

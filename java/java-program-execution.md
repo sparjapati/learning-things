@@ -1,5 +1,10 @@
 # What Happens When You Run `java Demo`
 
+> "Write once, run anywhere."
+> — Sun Microsystems' Java slogan (1995)
+>
+> *Everything below is the machinery that slogan quietly hides.*
+
 See also: [java-memory-management.md](java-memory-management.md) for the runtime data areas (heap, method area/metaspace, stack) that get set up during the startup this file describes, and [garbage-collection-vs-manual-memory-management.md](garbage-collection-vs-manual-memory-management.md) for what the GC threads spun up during startup actually do afterward.
 
 `javac Demo.java` and `java Demo` are two entirely separate steps, done by two entirely separate programs. `javac` (compile time) translates your source into portable bytecode once; `java` (run time) is what actually turns that bytecode into a running program, every time you launch it. This is that second step, in order.

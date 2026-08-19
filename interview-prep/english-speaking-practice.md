@@ -1,5 +1,8 @@
 # Improving English Speaking When Comprehension Is Already Strong
 
+> "The limits of my language mean the limits of my world."
+> — Ludwig Wittgenstein, *Tractatus Logico-Philosophicus*
+
 See also: [dsa-prep-plan.md](../dsa/dsa-prep-plan.md) (Phase 3) for why verbalizing your reasoning out loud during mock interviews is called out as a distinct, separately-trainable skill from solving silently — the same underlying gap this file addresses, applied specifically to technical interviews.
 
 ## Why this happens

@@ -1,5 +1,10 @@
 # TOTP (Time-based One-Time Password)
 
+> "Something you know, something you have, something you are."
+> — the classic three-factors-of-authentication maxim
+>
+> *TOTP is the "something you have" — which is why it complements a password rather than replacing it.*
+
 See also: [passkeys.md](passkeys.md) for a contrasting authentication mechanism — passkeys use an asymmetric key pair with no shared secret; TOTP, covered here, still relies on one.
 
 TOTP (RFC 6238) is the algorithm behind the rotating 6-digit codes from apps like Google Authenticator, Authy, or 1Password. Unlike a passkey, it's still built on a shared secret — both your phone and the server hold the exact same secret key. What makes the code useful as a one-time credential is combining that secret with the current time.

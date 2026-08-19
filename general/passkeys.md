@@ -1,5 +1,10 @@
 # Passkeys
 
+> "The only secure password is the one you can't remember."
+> — Troy Hunt
+>
+> *Passkeys take that to its conclusion: there is no password at all.*
+
 ## What problem they solve
 
 Passwords have a structural flaw: they're a **shared secret** — the same string has to exist in your head and on the server, and that string alone is the entire proof of identity. That one fact creates several attack surfaces at once:

@@ -1,5 +1,10 @@
 # How a QR Code Works
 
+> "The fundamental problem of communication is that of reproducing at one point either exactly or approximately a message selected at another point."
+> — Claude Shannon, *A Mathematical Theory of Communication* (1948)
+>
+> *A QR code is that problem printed in ink — which is why a large share of it is error correction, not data.*
+
 A QR (Quick Response) code is a black-and-white grid that encodes data as bits — black square = 1, white square = 0. A scanner photographs the grid, converts it to binary, then decodes that binary into text (a URL, a string, contact info, etc.).
 
 Analogy: it's Morse code laid out in space instead of time — dots and dashes become black and white squares on a grid.

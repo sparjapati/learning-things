@@ -1,5 +1,8 @@
 # Message Queue vs Pub/Sub vs Event Bus
 
+> "Smart endpoints and dumb pipes."
+> — James Lewis & Martin Fowler, *Microservices*
+
 See also: [redis-single-threaded.md](redis-single-threaded.md), which lists both "message/task queues" (`LPUSH`/`BRPOP`) and "pub/sub messaging" (`PUBLISH`/`SUBSCRIBE`) as separate Redis use cases — this file explains the general distinction between the two patterns.
 
 ## The core confusion

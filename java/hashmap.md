@@ -1,5 +1,10 @@
 # How a HashMap Works
 
+> "Smart data structures and dumb code works a lot better than the other way around."
+> — Eric S. Raymond, *The Cathedral and the Bazaar*
+>
+> *A HashMap is the canonical example: the cleverness is in the structure, so the calling code stays trivial.*
+
 The core trick: instead of searching through every entry to find a key (O(n)), a HashMap computes a number directly from the key that tells it exactly which slot to look in — turning lookup into, on average, a single array access, O(1).
 
 ![HashMap bucket array: apple and plum hash to the same bucket and get chained together; pear hashes to a different bucket](images/hashmap-buckets-and-collisions.png)

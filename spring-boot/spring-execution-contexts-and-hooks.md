@@ -1,5 +1,10 @@
 # Spring Execution Contexts and Hook Points
 
+> "Don't call us, we'll call you."
+> — the Hollywood Principle (inversion of control)
+>
+> *Every hook point below is the framework calling you, not the other way around.*
+
 See also: [spring-request-lifecycle.md](spring-request-lifecycle.md) for the hooks along a single HTTP request's path specifically (filters, interceptors, AOP, `ResponseBodyAdvice`), and [../system-design/message-queue-vs-pubsub.md](../system-design/message-queue-vs-pubsub.md) for the queue vs pub/sub distinction referenced below.
 
 Spring gives you many places to attach code that runs outside the normal "controller calls service calls repository" call stack — at container startup/shutdown, on another thread, in reaction to an event, or bound to a transaction boundary. This is a survey of those hook points, grouped by what triggers them, plus a dedicated look at the Request Context and how errors are handled (or silently swallowed) in each one.

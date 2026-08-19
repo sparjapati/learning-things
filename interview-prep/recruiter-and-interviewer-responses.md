@@ -1,5 +1,10 @@
 # Recruiter & Interviewer Question Responses: Weak vs. High-Value
 
+> "The single biggest problem in communication is the illusion that it has taken place."
+> — attributed to George Bernard Shaw
+>
+> *Every weak answer below does communicate something — just not what the candidate intended.*
+
 A running collection of common recruiter/interviewer prompts, contrasting a weak (low-value) response against a high-value one, with the signal each sends and the general principle behind it. Add new entries below in the same format as they come up.
 
 See also: [salary-negotiation-strategy.md](salary-negotiation-strategy.md) for how to arrive at the actual number before using it in an answer here (e.g. for the CTC/other-offers questions above), and [remote-and-germany-job-search.md](remote-and-germany-job-search.md) for the same weak-vs-high-value format applied to visa/language/relocation questions.

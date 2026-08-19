@@ -1,5 +1,10 @@
 # How Schedulers Actually Work (Why They Don't Poll Every Millisecond)
 
+> "All of humanity's problems stem from man's inability to sit quietly in a room alone."
+> — Blaise Pascal
+>
+> *A good scheduler solves exactly that: it sits still until the next deadline instead of busy-checking the clock.*
+
 ## The short answer
 
 A naive design — loop forever, check the clock, ask "is it time yet?" — would burn CPU constantly for no reason, since almost every check says "not yet." That naive design (**polling**) does exist historically, but virtually every real scheduler — from the OS kernel up to an app's `@Scheduled` job — replaced it decades ago with a **deadline-based sleep** design instead.

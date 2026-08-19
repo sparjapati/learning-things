@@ -1,5 +1,8 @@
 # MySQL Table vs MongoDB Document
 
+> "Data dominates. If you've chosen the right data structures and organized things well, the algorithms will almost always be self-evident."
+> — Rob Pike, *Notes on Programming in C*
+
 Both ultimately store data as field → value pairs, so the difference isn't in that basic idea. It's in structure, schema enforcement, and how relationships are modeled.
 
 ## 1. Structure: flat vs nested

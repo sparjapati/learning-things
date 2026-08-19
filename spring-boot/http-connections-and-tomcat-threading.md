@@ -1,5 +1,10 @@
 # HTTP/HTTPS Connections and Tomcat's Threading Model
 
+> "Threads are for people who can't program state machines."
+> — Alan Cox
+>
+> *Deliberately overstated — but it is exactly why a couple of poller threads can watch thousands of sockets.*
+
 When a browser talks to a Spring Boot app over HTTPS, several independent layers are involved, each with its own responsibility:
 
 ```
@@ -47,6 +52,8 @@ No handshake at all. The handshakes are paid **once per connection**, not once p
 The connection stays open until either side closes it (idle timeout, `Connection: close`, or the server sending `FIN`). If the server closed an idle connection, the *next* request pays for a fresh TCP + TLS handshake.
 
 ## 2. HTTP/1.1 vs HTTP/2
+
+This section is the short version, aimed at what it means for Tomcat. For the full protocol evolution — HTTP/1.0's per-request handshake, what 1.1 added beyond keep-alive, HPACK, and HTTP/3 — see [../system-design/http-protocol-versions.md](../system-design/http-protocol-versions.md).
 
 ### HTTP/1.1: one request at a time per connection
 
@@ -103,7 +110,7 @@ HTTP/1.1 is a single-lane road where a slow truck holds up everyone behind it, s
 | Is there a **reverse proxy / load balancer** in front? | N/A | N/A | Terminate HTTP/2 at the proxy, speak HTTP/1.1 to the app | NGINX serves HTTP/2 to browsers and proxies HTTP/1.1 to Spring Boot — the default production setup |
 | Are you using **gRPC**? | Not supported | N/A | Required — gRPC is defined on top of HTTP/2 | Any gRPC service, by specification |
 
-The practical default: **let a reverse proxy or load balancer handle HTTP/2 with browsers, and let Spring Boot speak HTTP/1.1 keep-alive behind it.** Enabling HTTP/2 directly in Spring Boot (`server.http2.enabled=true`) is mainly worth it when clients hit the app directly.
+The practical default: **let a reverse proxy or load balancer handle HTTP/2 with browsers, and let Spring Boot speak HTTP/1.1 keep-alive behind it.** Enabling HTTP/2 directly in Spring Boot (`server.http2.enabled=true`) is mainly worth it when clients hit the app directly. See [../system-design/reverse-proxy-protocol-termination.md](../system-design/reverse-proxy-protocol-termination.md) for why that split is the right default, when to run HTTP/2 end to end instead, and the `X-Forwarded-*`/keep-alive gotchas it introduces.
 
 ## 3. Does one socket own one thread?
 
@@ -279,5 +286,7 @@ Client
 ## See also
 
 - [spring-request-lifecycle.md](spring-request-lifecycle.md) — what happens *after* a worker thread picks up the request: filters, `DispatcherServlet`, interceptors, controller, message converters.
+- [../system-design/http-protocol-versions.md](../system-design/http-protocol-versions.md) — HTTP/1.0 vs 1.1 vs 2 vs 3 in depth: what each version changed on the wire and why.
+- [../system-design/reverse-proxy-protocol-termination.md](../system-design/reverse-proxy-protocol-termination.md) — why HTTP/2 stops at the edge and HTTP/1.1 carries on to the app, and what the app has to configure because of it.
 - [spring-execution-contexts-and-hooks.md](spring-execution-contexts-and-hooks.md) — how `@Async`/`@Scheduled` work on threads outside the Tomcat worker pool.
 - [../system-design/redis-single-threaded.md](../system-design/redis-single-threaded.md) — the same event-loop-over-many-sockets idea, taken to its extreme with a single thread.

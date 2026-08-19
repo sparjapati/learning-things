@@ -1,5 +1,8 @@
 # How Much CTC Should You Ask For? (India Job-Switch Negotiation)
 
+> "In business as in life, you don't get what you deserve, you get what you negotiate."
+> — Chester L. Karrass
+
 See also: [recruiter-and-interviewer-responses.md](recruiter-and-interviewer-responses.md) for how to *phrase* an answer when directly asked about your current/expected CTC or other offers — this file is about how to actually arrive at the number first.
 
 ## The core mistake: anchoring off in-hand instead of CTC

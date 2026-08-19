@@ -1,5 +1,10 @@
 # Redis Persistence: RDB vs AOF
 
+> "There are only two kinds of people: those who have lost data, and those who will."
+> — sysadmin adage
+>
+> *RDB and AOF are two different answers to how much you're willing to lose when it happens.*
+
 See also: [redis-single-threaded.md](redis-single-threaded.md) for how Redis works overall (this file expands on the "persistence" point mentioned there), and [caching-fundamentals.md](caching-fundamentals.md) for where Redis fits among the other caching layers.
 
 ## Why persistence exists at all

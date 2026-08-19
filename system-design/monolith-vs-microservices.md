@@ -1,5 +1,8 @@
 # What "Service" Means: Monolith vs Microservices
 
+> "If you can't build a well-structured monolith, what makes you think microservices are the answer?"
+> — Simon Brown
+
 When notes here talk about "Order Service" or "Payment Service," that means a separate running process — its own codebase, its own database, its own deploy lifecycle — that other services only talk to over the network (HTTP, gRPC, or a message broker), never by calling its functions directly in memory. It's not necessarily two different physical servers, but it is two independent deployable units.
 
 ## Monolith vs microservices
@@ -11,7 +14,7 @@ In microservices, they're split into genuinely separate deployable units:
 - Each has its own process (often a container/pod), started, stopped, scaled, or redeployed independently of the others.
 - Each typically owns its own database — no other service reaches directly into it; everyone else goes through its API.
 - They might run on the same physical machine, different machines, or different data centers — that detail doesn't matter to the definition. What matters is the independent deployable unit and the network boundary, not physical machine separation.
-- "Order Service" is usually not even one single instance — it's often several identical copies running behind a load balancer for redundancy/scaling, all collectively called "the Order Service."
+- "Order Service" is usually not even one single instance — it's often several identical copies running behind a load balancer for redundancy/scaling, all collectively called "the Order Service." (How that balancer picks an instance: [load-balancing-l4-vs-l7.md](load-balancing-l4-vs-l7.md).)
 
 ![Monolith: modules in one process sharing one database vs Microservices: separate processes, separate databases, communicating over the network](images/monolith-vs-microservices.png)
 

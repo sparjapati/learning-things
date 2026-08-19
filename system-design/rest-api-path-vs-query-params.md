@@ -1,5 +1,10 @@
 # REST API Design: Path Parameter vs. Query Parameter
 
+> "Cool URIs don't change."
+> — Tim Berners-Lee, W3C (1998)
+>
+> *Which is why it's worth getting path-vs-query right the first time — every URL you ship is a promise.*
+
 ## The short answer
 
 `/users/{userId}` (a **path parameter**) is the conventional choice when identifying **one specific resource by its unique identifier**. `/users?userId=xxxx` (a **query parameter**) is conventionally reserved for **filtering/searching a collection**, where the result could reasonably be zero, one, or many items.

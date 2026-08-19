@@ -1,5 +1,10 @@
 # CAP Theorem
 
+> "The '2 of 3' formulation was always misleading because it tended to oversimplify the tensions among properties."
+> — Eric Brewer, *CAP Twelve Years Later* (2012)
+>
+> *From the author of the theorem itself — which is why the useful question is "what happens during a partition?", not "pick two".*
+
 CAP theorem says a distributed data system can only guarantee **two out of three** properties at the same time, whenever a network partition occurs:
 
 - **C — Consistency**: every read gets the most recent write (or an error). All nodes see the same data at the same time.

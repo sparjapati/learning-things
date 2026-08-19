@@ -1,5 +1,8 @@
 # Remote & Germany-Specific Job Search (India-based Candidate)
 
+> "You miss 100% of the shots you don't take."
+> — widely attributed to Wayne Gretzky
+
 See also: [salary-negotiation-strategy.md](salary-negotiation-strategy.md) for how to size a CTC ask in general, and [recruiter-and-interviewer-responses.md](recruiter-and-interviewer-responses.md) for the scheduling/other-offers question format this file's "how to answer" section follows.
 
 ## Where to search

@@ -1,5 +1,10 @@
 # How Redis Works, Why It's Called Single-Threaded, and Common Use Cases
 
+> "Concurrency is not parallelism."
+> — Rob Pike
+>
+> *Redis serves thousands of clients concurrently on exactly one core — the clearest demonstration of the difference.*
+
 ## How Redis works
 
 Redis is an in-memory key-value data store. It keeps the entire dataset in RAM, which is why reads/writes are extremely fast (microsecond-level) compared to disk-backed databases like MySQL/MongoDB.

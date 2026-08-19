@@ -1,5 +1,10 @@
 # Phase 1 (Weeks 1–2): Diagnostic
 
+> "If you can't measure it, you can't improve it."
+> — widely attributed to Peter Drucker
+>
+> *The whole point of a closed-book, timed diagnostic is to get a number before trying to fix anything.*
+
 See also: [dsa-prep-plan.md](dsa-prep-plan.md) for the full 4-phase plan this is the first phase of.
 
 Solve 3 timed Medium problems from *each* of 12 topics, closed-book, no hints, and log the result honestly — this replaces the vague feeling of "I'm not confident" with an actual list. Expect to fail or struggle on several; that's the point of this phase, not a bad sign.

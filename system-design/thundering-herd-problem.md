@@ -1,5 +1,8 @@
 # Thundering Herd Problem (Cache Stampede)
 
+> "Men, it has been well said, think in herds; it will be seen that they go mad in herds, while they only recover their senses slowly, and one by one."
+> — Charles Mackay, *Extraordinary Popular Delusions and the Madness of Crowds*
+
 ## What it is
 
 The **thundering herd problem** (also called a **cache stampede**) happens when a shared resource that many concurrent requests depend on — most commonly a cache entry — becomes unavailable all at once (it expires, or the cache/server restarts), and *every* one of those waiting requests rushes to regenerate it **simultaneously**, overwhelming the backend the cache was protecting in the first place.

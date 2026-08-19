@@ -1,5 +1,10 @@
 # Spring Data JPA, JPA, Hibernate, and MySQL — How They Fit Together
 
+> "The purpose of abstraction is not to be vague, but to create a new semantic level in which one can be absolutely precise."
+> — Edsger W. Dijkstra
+>
+> *Each layer below is one such semantic level — and each is precise about a different thing.*
+
 ## The confusion
 
 These four names get thrown around interchangeably, but they aren't four competing ways to talk to a database — they're **four layers stacked on top of each other**, each one wrapping the layer below it.

@@ -1,5 +1,10 @@
 # Saga Pattern: Handling Failures Across a Multi-Step Distributed Transaction
 
+> "To err is human; to forgive, divine."
+> — Alexander Pope, *An Essay on Criticism*
+>
+> *A compensating transaction is a distributed system forgiving itself, one step at a time.*
+
 ## The core problem
 
 In a single-database monolith, "create order + reserve inventory + charge payment" could be wrapped in one ACID transaction — if payment fails, the whole thing rolls back atomically, as if the order never existed.

@@ -1,5 +1,10 @@
 # Kotlin Contracts
 
+> "Trust, but verify."
+> — Russian proverb, popularized by Ronald Reagan
+>
+> *A Kotlin contract is the trust half only: the compiler believes it and never verifies it — which is why an incorrect one is unsound.*
+
 Kotlin contracts let a function tell the compiler, in a formal way, something about its own behavior that the compiler couldn't otherwise infer just by reading the function body from the outside — mainly: "if I return in a certain way, then this condition is guaranteed true" or "I call this lambda parameter exactly once." The compiler then uses that declared guarantee to allow smart casts and definite-assignment checks it would otherwise reject.
 
 ## The problem contracts solve

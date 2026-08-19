@@ -1,5 +1,8 @@
 # DSA Interview Prep Plan: 2–3 Months, Starting From "Done It All, Trust None of It"
 
+> "Practice isn't the thing you do once you're good. It's the thing you do that makes you good."
+> — Malcolm Gladwell, *Outliers*
+
 For someone who's already been through most DSA topics once but doesn't feel confident applying any of them under pressure. The problem here usually isn't missing knowledge — it's that knowledge was never turned into fast, reliable *pattern recognition*. The plan below is built around fixing that, not re-teaching topics from scratch.
 
 ## The four phases

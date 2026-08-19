@@ -1,5 +1,10 @@
 # Java Memory Management: Stack, Heap, Method Area, and String Pool
 
+> "Premature optimization is the root of all evil."
+> — Donald Knuth
+>
+> *Worth remembering before tuning any of the regions below — but you can't tune what you can't name.*
+
 See also: [garbage-collection-vs-manual-memory-management.md](garbage-collection-vs-manual-memory-management.md) for *why* Java needs a collector at all (vs. C++'s RAII), the GC-roots/reachability mechanism, and a decision checklist for GC vs. manual memory management. This file is about *where things physically live* — the JVM's runtime memory layout — rather than how it gets reclaimed.
 
 Java memory isn't just "stack vs heap." The JVM spec defines several distinct runtime data areas, and knowing what lives in each one explains a lot of otherwise-confusing behavior: why passing an object only ever copies a reference, why unbounded recursion and a huge object graph fail with two *different* errors, and why `==` on strings sometimes "just works" and sometimes doesn't.

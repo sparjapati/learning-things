@@ -1,5 +1,10 @@
 # Managing multiple GitHub accounts on one machine
 
+> "Explicit is better than implicit."
+> — Tim Peters, *The Zen of Python*
+>
+> *A per-directory `includeIf` rule beats hoping git guesses the right identity.*
+
 Two independent pieces make this work together: **SSH keys** (which account you authenticate
 as when pushing/pulling) and **git identity** (whose name/email goes on the commits you make).
 They're separate systems — get both right, in either order.

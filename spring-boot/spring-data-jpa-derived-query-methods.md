@@ -1,5 +1,10 @@
 # How Spring Data JPA Turns a Method Name Into a Query
 
+> "Convention over configuration."
+> — the Rails doctrine, and Spring Boot's too
+>
+> *`findByEmailAndStatusOrderByCreatedAtDesc` is that principle taken all the way into the method name.*
+
 See [spring-boot/jpa-hibernate-spring-data-stack.md](jpa-hibernate-spring-data-stack.md) for how Spring Data JPA, JPA, Hibernate, and MySQL layer on top of each other — this file zooms into one specific mechanism inside that Spring Data JPA layer: how a bare repository method like `findByEmail(...)` becomes a real SQL query with no method body written.
 
 ## Correcting the common misconception

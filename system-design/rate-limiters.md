@@ -1,5 +1,10 @@
 # Distributed Rate Limiter Architecture (Uber's Control Plane Approach)
 
+> "Nature does not hurry, yet everything is accomplished."
+> — Lao Tzu
+>
+> *A fair description of what a token bucket does to a traffic spike.*
+
 ## Overview
 
 Traditional distributed rate limiters often rely on a centralized datastore (such as Redis) to make a decision for every incoming request. While simple to implement, this approach introduces latency, infrastructure complexity, and scalability challenges at very high request volumes.
