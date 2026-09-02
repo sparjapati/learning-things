@@ -286,6 +286,7 @@ Client
 ## See also
 
 - [spring-request-lifecycle.md](spring-request-lifecycle.md) — what happens *after* a worker thread picks up the request: filters, `DispatcherServlet`, interceptors, controller, message converters.
+- [../java/java-concurrency.md](../java/java-concurrency.md) — what those worker threads have to be careful about once they touch shared state, and how virtual threads change the picture.
 - [../system-design/http-protocol-versions.md](../system-design/http-protocol-versions.md) — HTTP/1.0 vs 1.1 vs 2 vs 3 in depth: what each version changed on the wire and why.
 - [../system-design/reverse-proxy-protocol-termination.md](../system-design/reverse-proxy-protocol-termination.md) — why HTTP/2 stops at the edge and HTTP/1.1 carries on to the app, and what the app has to configure because of it.
 - [spring-execution-contexts-and-hooks.md](spring-execution-contexts-and-hooks.md) — how `@Async`/`@Scheduled` work on threads outside the Tomcat worker pool.

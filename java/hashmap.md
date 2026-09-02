@@ -34,3 +34,7 @@ for each entry: check hash & 16 (the newly-relevant bit)
 ## Real-life analogy
 
 Think of a hotel's wall of numbered mail pigeonholes. Instead of a receptionist checking every pigeonhole for your name, they do quick math on your name (the hash function) and know instantly which numbered hole to check. Usually that's exact — one guest, one hole. Occasionally two different guests' names produce the same number (a collision), so that hole has a small stack of letters, and the receptionist flips through that short stack checking names properly to find yours. If the hotel gets too full (too many letters per hole on average), management gets a bigger wall of pigeonholes and re-sorts all the mail into it using the same math against the new, bigger count — that's a resize. They specifically double the wall's size each time (16 holes → 32 → 64) rather than adding a few holes at a time, because doubling lets them re-sort by asking just one new yes/no question per stack of letters ("does your number have this one extra digit lit up?") instead of redoing the math on every single letter from scratch.
+
+## See also
+
+- [consistent-hashing](../system-design/consistent-hashing.md) — the same bucket-and-hash-function problem across machines instead of within one array, where a resize means moving data over the network rather than rehashing in place.

@@ -39,6 +39,59 @@ void process() {
 } // conn becomes unreachable here, but its memory is reclaimed whenever the GC next runs — not necessarily immediately
 ```
 
+## Objects move: why an address is never stable in Java
+
+A consequence of tracing GC that's easy to miss: **the JVM relocates live objects, so an object's address changes during its lifetime — even while your program is running.** In C++ an object stays exactly where `new` put it until you `delete` it, which is why raw pointers, references, and iterators into it stay valid. In Java there is no such guarantee, and that difference explains several otherwise-odd properties of the language.
+
+### Why a collector moves objects at all
+
+Reclaiming memory in place (**mark-sweep**) leaves the heap full of holes: total free space may be large while no single hole fits a new array, so you get an `OutOfMemoryError` with plenty of "free" memory. Moving objects fixes that, and buys three more things:
+
+- **Compaction** — survivors are packed together, eliminating fragmentation.
+- **Bump-pointer allocation** — with one contiguous free region, allocating is "advance a pointer" (a few instructions in a thread-local TLAB) instead of searching a free list the way `malloc` must.
+- **Generational copying** — most objects die young, so young-gen collection *evacuates* the few survivors (Eden → Survivor → Old) and declares the whole region free. Cost scales with what **survives**, not with what was allocated.
+- **Locality** — objects allocated together and surviving together end up adjacent, which is friendlier to CPU caches.
+
+### Which collectors move things (all the ones you'd use)
+
+| Collector | Movement |
+|---|---|
+| **Serial / Parallel** | Copying young generation; mark-sweep-**compact** old generation |
+| **G1** | Region-based; every collection is an **evacuation** (copy survivors into fresh regions) |
+| **ZGC / Shenandoah** | Relocate objects **concurrently**, while application threads keep running |
+| **CMS** (removed in Java 14) | Non-compacting old gen — its fragmentation problem is precisely why it was replaced |
+| **Epsilon** | Never collects, so never moves — a no-op collector for testing |
+
+### How references survive the move
+
+For a **stop-the-world** copy the JVM copies the object, leaves a **forwarding pointer** at the old location, and then fixes up every reference to it — using remembered sets and card tables to find references from regions it didn't collect. When the pause ends, no reference to the old address remains.
+
+**Concurrent** relocation is harder, because your threads may dereference an object while it's being moved, so both designs add a **read barrier** on reference loads:
+
+- **ZGC** uses **coloured pointers** — metadata bits inside the reference itself. Loading a reference whose colour is stale triggers the barrier, which relocates or remaps it and then **self-heals** the field so subsequent loads are free.
+- **Shenandoah** uses a **Brooks forwarding word** in each object header, so loads follow it to the current copy.
+
+Those barriers are the runtime cost you pay for pauses that don't grow with heap size.
+
+### What this means for you
+
+- **You cannot store or persist a reference** — this is the deep reason serialization exists at all (see [java-serialization.md](java-serialization.md)): an address is meaningless in another process *and* potentially stale in this one.
+- **Java has no pointer arithmetic and no `&` operator.** It isn't a syntax choice; a moving collector makes raw addresses unusable as a programming concept.
+- **`System.identityHashCode()` is not an address.** HotSpot computes it once and caches it in the object's mark word, precisely so it stays stable when the object moves.
+- **Compressed oops** make "address" even more of an abstraction — on heaps under ~32 GB a reference is a 32-bit offset from the heap base, not a machine address.
+- **Native code must pin or copy.** JNI hands out opaque *handles*, not raw pointers, and `GetPrimitiveArrayCritical` exists to pin an array (blocking GC) for a short window. Off-heap memory (`ByteBuffer.allocateDirect`, `Unsafe.allocateMemory`, the Foreign Function & Memory API) is never moved — that's part of why it's used for interop and for large caches.
+- **Pause time tracks the live set.** Copying cost is proportional to how much *survives*, which is why a huge heap of short-lived garbage can collect faster than a small heap of long-lived objects.
+
+### The C++ contrast, which is the whole trade-off
+
+C++ objects don't move, so pointers stay valid, interop is trivial, and there are no read barriers — but nothing compacts the heap, so long-running processes fight fragmentation, and custom allocators or arena/pool patterns exist largely to manage it. Java accepts relocation (and barrier overhead, and opaque references) and gets nearly free allocation, no fragmentation, and no dangling pointers in return. **Neither can have both: address stability and automatic compaction are mutually exclusive.**
+
+### Real-life analogy: the library that re-shelves
+
+A library periodically re-shelves its entire collection to close the gaps left by removed books (**compaction after a GC cycle**). A book's contents and title never change (**the object's identity and field values persist**), but its shelf position does (**its address changes**), and the catalogue is rewritten to point at the new slots (**the GC updates every reference**). Your handwritten note saying "shelf 4, slot 12" is now simply wrong (**a cached raw address is stale**) — which is why you always look a book up by title in the catalogue (**by reference through the JVM, never by raw address**).
+
+With a concurrent collector, the re-shelving happens **while readers browse**, so anyone reaching for a book that has already been moved gets handed a redirect slip at the old slot (**ZGC's load barrier / Shenandoah's forwarding pointer**), and the reader's own note is quietly corrected for next time (**self-healing of the reference**).
+
 ## Why the difference — design philosophy, not capability
 
 - **Zero-overhead principle**: C++'s guiding rule is "don't pay for what you don't use." A tracing GC requires runtime bookkeeping on *every* object (metadata, write barriers to track reference changes) even for programs that never need it — unacceptable for C++'s target domains (OS kernels, embedded firmware, game engines, real-time audio) where that overhead and pause unpredictability are the whole problem being avoided.

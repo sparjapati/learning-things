@@ -40,3 +40,7 @@ This isn't a single rule — it's a checklist you weigh together against your ac
 - Needs strict cross-record consistency and relational querying → table (MySQL).
 
 Many real systems use both — e.g., MySQL for orders/payments/users, MongoDB for product catalog/content — rather than forcing one database to handle everything.
+
+## See also
+
+- [database-sharding-partitioning-replication](database-sharding-partitioning-replication.md) — much of what reads as "NoSQL scales better" is really built-in sharding and leaderless replication, which is worth separating from the data-model question above.

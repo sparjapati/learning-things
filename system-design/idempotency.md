@@ -50,3 +50,7 @@ Either way, the server-side check needs **three outcomes, not two** ("exists →
 The bug in "if exists → process, else discard": imagine the order succeeds, but the response is lost on the way back (dropped connection). The client, not knowing it succeeded, resubmits the same request with the same key. If the key still just "exists" with no consumed/unused distinction, the server processes it again — a second order. If instead the fix is to delete the key right after use, the retry now finds "key doesn't exist" and gets discarded — the client thinks the order *failed* and may create a brand-new key and a genuinely duplicate order, the opposite of the goal. Storing the result against the consumed key and replaying it on retries is what actually closes the loop.
 
 The "check, then flip to consumed, then store result" sequence also needs to be atomic against two near-simultaneous duplicate requests (e.g. a double-click) — typically a conditional update like `UPDATE keys SET status = 'CONSUMED' WHERE key = ? AND status = 'UNUSED'`, so only one of two racing requests actually wins and processes the order.
+
+## See also
+
+- [write-ahead-log](write-ahead-log.md) — crash recovery replays a log that may already be partly applied, so replay has to be idempotent; databases get that from a per-page log sequence number.

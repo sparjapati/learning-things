@@ -27,6 +27,8 @@ AOF logs every write command (e.g., `SET foo bar`, `INCR counter`) to a file, in
 - **Pro**: Much less data loss — `fsync` can be configured to happen every second (`appendfsync everysec`, lose at most ~1s of writes) or on every single write (`appendfsync always`, effectively zero loss but slower).
 - **Con**: The log file grows continuously (every write ever made), and replaying a huge log on restart is slower than loading an RDB snapshot. Redis mitigates file growth with **AOF rewriting** — periodically compacting the log to the minimal set of commands needed to reproduce the current dataset (e.g., collapsing 1000 `INCR counter` calls into one `SET counter 1000`).
 
+AOF is Redis's version of a **write-ahead log**, the mechanism most databases use for crash recovery — see [write-ahead-log](write-ahead-log.md) for how it works in general, and why AOF is technically write-*behind* (the command runs in memory before it is logged), which is exactly why `everysec` can lose writes Redis already acknowledged.
+
 ## Example comparing durability
 
 ```

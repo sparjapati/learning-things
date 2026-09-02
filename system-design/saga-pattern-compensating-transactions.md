@@ -105,3 +105,7 @@ Booking a flight and a hotel as a package. You book the flight (reserved), then 
 ## Idempotency matters
 
 Message brokers typically guarantee at-least-once delivery, so a compensating action like "release stock" or "cancel order" might get triggered more than once for the same event. Running it twice must be a safe no-op — not a double-refund, not a crash, not a double-decrement of inventory back into stock. See [idempotency.md](idempotency.md) for what idempotency means more generally and how to design for it.
+
+## See also
+
+- [database-sharding-partitioning-replication](database-sharding-partitioning-replication.md) — sagas are also the answer *inside* one application once a database is sharded, because a transaction can no longer span two shards.

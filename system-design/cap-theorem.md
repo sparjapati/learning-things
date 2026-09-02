@@ -62,3 +62,7 @@ You can't have both "always answer" and "always correct" while the phone line is
 ## Why it matters
 
 This is the theoretical backbone behind the tradeoffs discussed in [choosing-sql-vs-nosql.md](choosing-sql-vs-nosql.md) — a distributed database's claim of "always consistent and always available" only holds as long as nothing ever partitions, which isn't realistic at scale.
+
+It is also the theory underneath the replication choices in [database-sharding-partitioning-replication](database-sharding-partitioning-replication.md) — synchronous vs asynchronous replication, and what a minority-side node does during failover, are exactly the CP-vs-AP decision made concrete.
+
+For the durability side of the same trade-off, see [write-ahead-log](write-ahead-log.md) — how many nodes must have the log record before a commit is acknowledged is the knob that turns a CP choice into a latency cost.

@@ -206,7 +206,9 @@ class UserWriteAroundService(private val userRepository: UserRepository) {
 - A hot cache key expiring under heavy concurrent traffic is exactly the [thundering herd / cache stampede problem](thundering-herd-problem.md).
 - [Redis](redis-single-threaded.md) and Memcached are the most common distributed-cache technologies; see [redis-persistence-rdb-vs-aof.md](redis-persistence-rdb-vs-aof.md) for how a cache that also needs to survive a restart persists data.
 - Rate limiters ([rate-limiters.md](rate-limiters.md)) often store their own counters/tokens in a cache like Redis.
+- [database-sharding-partitioning-replication](database-sharding-partitioning-replication.md) — caching is step 3 of the database scaling ladder, and usually the cheapest way to avoid ever needing to shard.
 
 ## Just for fun
 
 A database query walks into a bar. The bartender says, "Cash only."
+- [consistent-hashing](consistent-hashing.md) — how a distributed cache tier decides which node holds a key, and why naive `hash mod serverCount` routing dumps most of the cache on the floor whenever you add a server.

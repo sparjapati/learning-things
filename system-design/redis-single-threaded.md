@@ -71,3 +71,7 @@ Redis is usually introduced as "just a cache," but its data structures and speed
 8. **Geospatial queries** — built-in geo commands (`GEOADD`, `GEOSEARCH`) store coordinates and answer "find all points within X km" (e.g. nearby drivers/restaurants).
 
 **Why caching dominates in practice**: most apps already have a source-of-truth database (MySQL/Mongo), and the cheapest win is putting Redis in front of slow, repeated reads. The other use cases require making Redis the primary store for that data, which is a bigger architectural commitment — so teams reach for it there less often, even though Redis is fully capable.
+
+## See also
+
+- [consistent-hashing](consistent-hashing.md) — Redis Cluster uses 16384 fixed hash slots rather than a hash ring; that note covers the difference and when each approach wins.

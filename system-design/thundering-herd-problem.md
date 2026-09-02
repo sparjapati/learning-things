@@ -78,3 +78,7 @@ function getValue(key):
 ```
 
 See [system-design/rate-limiters.md](rate-limiters.md) for how rate limiting acts as a backstop once a storm is already underway, and [system-design/redis-single-threaded.md](redis-single-threaded.md) for why a cache like Redis being hit with duplicate concurrent queries is itself a bottleneck worth avoiding.
+
+## See also
+
+- [consistent-hashing](consistent-hashing.md) — a `mod N` rehash after adding a cache server invalidates ~80% of keys at once, which is a herd triggered by a capacity increase.

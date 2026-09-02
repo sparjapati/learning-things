@@ -38,3 +38,7 @@ It's exactly like ordering food at a counter-service restaurant. You pay and get
 ## The pending state is a first-class UI state
 
 Since there's no guaranteed upper bound on how long the async pipeline takes, a well-built app doesn't just spin forever — it shows `PENDING` with a client-side timeout (e.g., "still processing — we'll notify you") rather than blocking the UI indefinitely. The `orderId` is used as a correlation key so that whichever channel (poll response, WebSocket message, or push notification) delivers the result, the app knows exactly which in-flight order it belongs to.
+
+## See also
+
+- [write-ahead-log](write-ahead-log.md) — the same acknowledge-now-persist-shortly-after trade-off, one layer down, inside the database itself.

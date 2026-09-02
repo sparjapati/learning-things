@@ -5,6 +5,8 @@
 >
 > *Worth remembering before tuning any of the regions below — but you can't tune what you can't name.*
 
+See also: [java-concurrency.md](java-concurrency.md) for why per-thread stacks vs the shared heap make visibility a problem, and what `synchronized`, `volatile`, and the rest do about it.
+
 See also: [garbage-collection-vs-manual-memory-management.md](garbage-collection-vs-manual-memory-management.md) for *why* Java needs a collector at all (vs. C++'s RAII), the GC-roots/reachability mechanism, and a decision checklist for GC vs. manual memory management. This file is about *where things physically live* — the JVM's runtime memory layout — rather than how it gets reclaimed.
 
 Java memory isn't just "stack vs heap." The JVM spec defines several distinct runtime data areas, and knowing what lives in each one explains a lot of otherwise-confusing behavior: why passing an object only ever copies a reference, why unbounded recursion and a huge object graph fail with two *different* errors, and why `==` on strings sometimes "just works" and sometimes doesn't.
@@ -53,6 +55,52 @@ Most collectors split the heap based on the "weak generational hypothesis" — m
 - **Young Generation**: `Eden` (where new objects are first allocated) plus two `Survivor` spaces (`S0`/`S1`). A **minor GC** collects Eden; anything still reachable is copied into a Survivor space, and after surviving enough minor GCs (the tenuring threshold), gets promoted into the Old Generation.
 - **Old Generation (Tenured)**: long-lived objects. Collected less often via a **major/full GC**, typically more expensive since the region is larger.
 - **(Historical) Permanent Generation (PermGen)**: pre-Java 8, held class metadata and the string pool, inside the heap with a fixed size — a frequent source of `OutOfMemoryError: PermGen space`. Removed in Java 8, replaced by Metaspace, which lives in native (off-heap) memory and grows automatically.
+
+## Compressed oops: why a 64-bit JVM stores 32-bit references
+
+An **oop** is HotSpot's name for an *ordinary object pointer* — a reference to a heap object. Every reference field, every element of a reference array, and the class pointer inside each object header is an oop.
+
+On a 64-bit JVM a native oop is **8 bytes**. That was a real problem when the industry moved from 32-bit: the same program suddenly needed roughly 1.5× the heap for pointer-heavy structures, and each cache line held half as many references — the so-called "64-bit tax," paid in memory and in cache misses.
+
+**Compressed oops** (`-XX:+UseCompressedOops`) fix it by storing references as **32-bit scaled offsets from a heap base** instead of absolute addresses. The trick rests on alignment: Java objects are 8-byte aligned, so the low 3 bits of every object address are always zero and carry no information. Drop them:
+
+```
+encode:  narrow = (address - heapBase) >>> 3
+decode:  address = heapBase + (narrow << 3)
+
+reach:   2^32 slots × 8 bytes = 32 GB of heap addressable with 32-bit references
+```
+
+HotSpot picks the cheapest of three modes automatically: **unscaled** (heap in the low 4 GB — the narrow value *is* the address), **zero-based** (heap mapped low enough that `heapBase` is 0, so decoding is a single shift with no add), or **base + shift** for anything higher. The shift usually folds into the CPU's addressing mode, so the runtime cost is close to nothing — and the smaller footprint often makes the program measurably *faster* through better cache utilization.
+
+### The 32 GB cliff
+
+Compressed oops are **on by default whenever the max heap fits under the ~32 GB limit**, and silently **off** above it. That produces the most counter-intuitive tuning result in the JVM:
+
+```
+-Xmx31g   → compressed oops ON  → every reference 4 bytes
+-Xmx33g   → compressed oops OFF → every reference 8 bytes
+```
+
+A 33 GB heap can hold **less live data** than a 31 GB one, because every reference in the entire heap just doubled. The practical rule: stay under ~32 GB, or go far enough above it (roughly 48 GB+) that the extra raw capacity outweighs the loss. `-XX:ObjectAlignmentInBytes=16` raises the ceiling to 64 GB by shifting 4 bits instead of 3, at the cost of more per-object padding.
+
+### What it changes about object size
+
+| | Compressed oops on | off |
+|---|---|---|
+| Mark word | 8 bytes | 8 bytes |
+| Klass pointer | 4 bytes (with `UseCompressedClassPointers`) | 8 bytes |
+| Each reference field / reference array element | 4 bytes | 8 bytes |
+| Typical header | 12 bytes (padded to 16) | 16 bytes |
+
+Compressed **class** pointers are a separate but related switch (`-XX:+UseCompressedClassPointers`), which is why the JVM has a dedicated *Compressed Class Space* (1 GB by default, `-XX:CompressedClassSpaceSize`) in metaspace.
+
+### Two nuances worth knowing
+
+- **ZGC doesn't use compressed oops at all** — its coloured pointers need the full 64 bits, so choosing ZGC means accepting 8-byte references regardless of heap size.
+- **"The address" of a Java object is an abstraction anyway.** With compressed oops a reference isn't a machine address but an encoded offset — which is one more reason references can't be persisted or handed to native code (see [garbage-collection-vs-manual-memory-management.md](garbage-collection-vs-manual-memory-management.md) on relocation, and [java-serialization.md](java-serialization.md) on why serialization exists).
+
+To see which mode you're in: `java -Xlog:gc+heap+coops -version` prints the heap address range and the compressed-oops mode; the JOL (Java Object Layout) tool shows the resulting per-object field layout and padding.
 
 ## String Pool in detail
 
