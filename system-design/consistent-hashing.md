@@ -34,12 +34,16 @@ The nasty part is that this is worst *precisely when you're growing*. The operat
 
 ## What we actually want
 
+First, one term used throughout: a key's **owner** is the node responsible for it — the cache server that stores that entry, the shard that holds that row, the backend instance that handles that session. "Routing" means working out the owner. (With replication, "owner" means the *first* node responsible; the extra copies are its replicas — see [Replication on the ring](#replication-on-the-ring).)
+
 | Requirement | Why |
 | --- | --- |
 | **Minimal disruption** — adding or removing one node moves as few keys as possible | So scaling is a non-event |
-| **No central directory** — any client can compute the owner alone | So routing needs no extra lookup or shared state |
-| **Deterministic** — every client agrees on the owner | Otherwise two clients write the same key to different nodes |
+| **No central directory** — any client can compute the owner alone | So routing needs no extra lookup or shared state on the hot path |
+| **Deterministic** — every client agrees on the owner | Otherwise client A writes `user:8471` to N3 while client B reads it from N5 and finds nothing — a permanent cache miss, or two divergent copies of a row |
 | **Balanced** — nodes get roughly equal shares | Otherwise one node is the bottleneck |
+
+Determinism needs **two** things to agree, and only the first is easy: the **hash function** (code, so it matches as long as everyone runs the same build — which is why a non-portable hash like `String.hashCode()` breaks it across languages) and the **node list** (state, which can be stale). A client that hasn't yet learned a node joined will compute a different owner, which is why the ring removes the per-key directory but not the need for membership agreement.
 
 `mod N` satisfies three of four and fails the first one catastrophically. Consistent hashing fixes that one while keeping the others.
 
@@ -254,3 +258,5 @@ The pattern: **consistent hashing wins where nodes are transient and the cost of
 - [thundering-herd-problem](thundering-herd-problem.md) — what a mass cache remap causes downstream, and the reason `mod N` rehashing is dangerous rather than merely wasteful.
 - [redis-single-threaded](redis-single-threaded.md) — Redis Cluster's fixed 16384 hash slots, a deliberate alternative to a hash ring.
 - [java/hashmap](../java/hashmap.md) — the single-machine version of the same problem: buckets, a hash function, and what a resize costs.
+- [zookeeper-distributed-coordination](zookeeper-distributed-coordination.md) — the ring removes the per-key directory but still needs an agreed node list; this is where that agreement usually lives.
+- [load-balancing-algorithms](load-balancing-algorithms.md) — ring-hash and Maglev as load-balancing policies, and where hashing sits against round robin, least-connections and power-of-two-choices.

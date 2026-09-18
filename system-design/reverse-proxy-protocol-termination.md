@@ -151,3 +151,4 @@ server.tomcat.threads.max=200               # concurrency that matters: worker t
 - [load-balancing-l4-vs-l7.md](load-balancing-l4-vs-l7.md) — what "L4" and "L7" mean in the checklist above, and how each layer balances traffic across app instances.
 - [caching-fundamentals.md](caching-fundamentals.md) — the reverse proxy is also a cache layer in the same request path.
 - [thundering-herd-problem.md](thundering-herd-problem.md) — `proxy_cache_lock`, the edge's single-flight mechanism.
+- [forward-proxy-reverse-proxy-vpn](forward-proxy-reverse-proxy-vpn.md) — where a reverse proxy sits relative to a *forward* proxy and a VPN, and why the same software fills opposite roles depending on whose agent it is.

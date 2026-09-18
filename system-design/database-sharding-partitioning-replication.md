@@ -145,6 +145,67 @@ Worth knowing because it explains several odd restrictions:
 
 ---
 
+### Read/write splitting: wiring it up in the application
+
+The topology above only pays off if reads actually reach the replicas. Two terminology notes first: the "write" node is the **primary/leader** — it accepts writes *and* can serve reads, it is not write-only. The replicas are genuinely **read-only**; they will reject a write outright, which is a useful safety net.
+
+**Three places to implement the split**, and they are not equivalent:
+
+| Where | How | Pros | Cons |
+| --- | --- | --- | --- |
+| **In the application** | Two `DataSource`s, chosen per transaction | No new infrastructure; you control the rules | Every service reimplements it; easy to get read-your-writes wrong |
+| **In a proxy** | ProxySQL, pgpool-II, MaxScale, RDS Proxy in front of the cluster | Language-agnostic, one place to change, can route by SQL statement | Another hop and another thing to operate; statement-based routing misjudges edge cases |
+| **At the endpoint** | The provider gives you a writer and a reader DNS name (Aurora, Cloud SQL) | Trivial to adopt; failover handled for you | Coarse — you still choose an endpoint per connection |
+
+In Spring Boot the idiomatic version is a routing `DataSource` keyed off the transaction's read-only flag:
+
+```kotlin
+// Spring sets the read-only flag before the DataSource is consulted,
+// so the routing key is simply "is this transaction read-only?".
+class ReadWriteRoutingDataSource : AbstractRoutingDataSource() {
+    override fun determineCurrentLookupKey(): Any =
+        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly()) "replica" else "primary"
+}
+
+@Service
+class OrderService(private val orders: OrderRepository) {
+
+    @Transactional(readOnly = true)                 // → replica
+    fun findOrders(customerId: String): List<Order> = orders.findByCustomerId(customerId)
+
+    @Transactional                                   // → primary
+    fun placeOrder(order: Order): Order = orders.save(order)
+}
+```
+
+`@Transactional(readOnly = true)` earns its keep here: it is both the routing key *and* a hint that lets Hibernate skip dirty-checking.
+
+**What must never be routed to a replica:**
+
+- Anything inside a write transaction — including the reads it does, since a read-modify-write must see its own uncommitted state.
+- A read whose result decides a write (`SELECT stock … then UPDATE`). Stale input produces a wrong write; this is the most damaging misroute.
+- A read immediately after that same user's write, unless you apply the read-your-writes fix above.
+- Anything needing a lock (`SELECT … FOR UPDATE`).
+
+**Route around lag, don't assume it's zero.** Replication lag is a number you can query (`pg_last_xact_replay_timestamp()`, `SHOW REPLICA STATUS`), so treat a replica beyond a threshold as unhealthy and send its traffic elsewhere:
+
+```kotlin
+fun readSource(): DataSource =
+    replicas.firstOrNull { it.lag() < maxAcceptableLag } ?: primary   // fall back rather than serve stale data
+```
+
+Falling back to the primary is the right default: correctness degrades gracefully into extra load, rather than load degrading silently into wrong answers.
+
+**Purpose-built replicas** are worth knowing about, since they cost nothing beyond a replica you already run:
+
+| Kind | Use |
+| --- | --- |
+| **Analytics replica** | Long reporting queries that would otherwise disturb the primary's buffer cache |
+| **Delayed replica** | Deliberately kept an hour behind, so an accidental `DELETE` can be recovered from before it replicates |
+| **Cascading replica** | A replica replicating from another replica, so a large fan-out doesn't burden the primary |
+
+**The mistake that undoes all of it:** adding replicas to fix a *write* bottleneck. Every replica applies every write the primary took, so read replicas do nothing for write throughput — and each one adds replication work. That problem is sharding's, not replication's.
+
 ## 1.2 Multi-leader replication
 
 More than one node accepts writes, and leaders replicate to each other.
@@ -364,7 +425,7 @@ The catch is that the shard key is now a property that can change (a user reloca
 
 ### Hot spots, and why hashing doesn't fix all of them
 
-Hashing spreads *distinct keys* evenly. It does nothing when a **single key** is hot — the "celebrity problem". Every follower of one enormous account writes to the same partition; hashing put that partition on one node and there it stays.
+Hashing spreads *distinct keys* evenly. It does nothing when a **single key** is hot — the "celebrity problem". (For how this differs from a cache stampede or a thundering herd — same symptom, different cause, different fix — see [thundering-herd-problem](thundering-herd-problem.md).) Every follower of one enormous account writes to the same partition; hashing put that partition on one node and there it stays.
 
 The reason hashing can't help is that **hashing is a deterministic function of the key** — `hash("post:123")` is one number, so it maps to one partition forever. That determinism is the feature (it's what removes the need for a lookup), and it's exactly why no hash function can split a single key.
 
@@ -743,3 +804,5 @@ The pattern worth noticing: **the fixed-partition-count model shows up everywher
 - [blobs-and-large-object-storage](blobs-and-large-object-storage.md) — why moving large columns off the primary often removes the pressure that looked like a sharding problem.
 - [write-ahead-log](write-ahead-log.md) — what the log being shipped in "WAL / physical" replication actually is, and why a follower is really a node permanently stuck in crash recovery.
 - [consistent-hashing](consistent-hashing.md) — the ring in depth, including why virtual nodes are mandatory and when a fixed partition count is the better choice.
+- [zookeeper-distributed-coordination](zookeeper-distributed-coordination.md) — the service that usually arbitrates leader election, failover and shard-topology membership for a sharded, replicated cluster.
+- [latency-percentiles](latency-percentiles.md) — scatter-gather across shards is fan-out, so cross-shard queries inherit tail amplification: a rare slow shard becomes a common slow query.

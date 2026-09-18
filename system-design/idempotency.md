@@ -54,3 +54,5 @@ The "check, then flip to consumed, then store result" sequence also needs to be 
 ## See also
 
 - [write-ahead-log](write-ahead-log.md) — crash recovery replays a log that may already be partly applied, so replay has to be idempotent; databases get that from a per-page log sequence number.
+- [zookeeper-distributed-coordination](zookeeper-distributed-coordination.md) — fencing tokens are the same concern: a paused lock holder must not be able to apply a stale write when it wakes up.
+- [http-headers](http-headers.md) — `Idempotency-Key` and the conditional headers (`If-Match`) that give you optimistic concurrency over HTTP.

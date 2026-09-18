@@ -729,3 +729,8 @@ Uber's distributed rate limiting system replaces centralized request coordinatio
 Instead of querying Redis for every request, each proxy makes local rate limiting decisions using the latest policy distributed by the controller. Traffic statistics are periodically aggregated to compute new global policies, which are then propagated back to the proxies.
 
 This architecture significantly reduces request latency, eliminates centralized bottlenecks, and scales efficiently to hundreds of millions of requests per second while still enforcing global rate limits.
+
+## See also
+
+- [forward-proxy-reverse-proxy-vpn](forward-proxy-reverse-proxy-vpn.md) — rate limiting usually runs at the reverse proxy, and depends on trusting `X-Forwarded-For` only from known proxies.
+- [http-headers](http-headers.md) — the `RateLimit-*` and `Retry-After` headers a limiter communicates through.

@@ -99,6 +99,8 @@ The LB terminates the TCP connection (and usually TLS), parses the HTTP request,
 
 ## Balancing algorithms (and which layer they fit)
 
+A summary here; the full treatment — how each one behaves, why round robin fails on long-lived connections, the power-of-two-choices result, and the slow-start/draining/outlier-detection machinery that matters more than the algorithm choice — is in [load-balancing-algorithms](load-balancing-algorithms.md).
+
 | Algorithm | How it picks | Notes |
 |---|---|---|
 | **Round robin** | Next backend in rotation | Fine when requests and servers are uniform; L4 and L7 |
@@ -219,3 +221,5 @@ A related fourth option: **client-side load balancing** (gRPC's `round_robin`/`x
 - [../spring-boot/http-connections-and-tomcat-threading.md](../spring-boot/http-connections-and-tomcat-threading.md) — what one app instance does with the connections a balancer sends it.
 - [monolith-vs-microservices.md](monolith-vs-microservices.md) — "a service" is usually several identical instances behind a load balancer.
 - [caching-fundamentals.md](caching-fundamentals.md) — an L7 balancer is often also the reverse-proxy cache layer.
+- [load-balancing-algorithms](load-balancing-algorithms.md) — the algorithms themselves in depth, plus the health-check, slow-start and retry-budget mechanisms that decide whether balancing actually works.
+- [forward-proxy-reverse-proxy-vpn](forward-proxy-reverse-proxy-vpn.md) — the proxy taxonomy around load balancing: forward vs reverse vs VPN, and why client-IP handling behind a proxy is a security decision.

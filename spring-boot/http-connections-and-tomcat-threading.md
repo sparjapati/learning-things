@@ -291,3 +291,5 @@ Client
 - [../system-design/reverse-proxy-protocol-termination.md](../system-design/reverse-proxy-protocol-termination.md) — why HTTP/2 stops at the edge and HTTP/1.1 carries on to the app, and what the app has to configure because of it.
 - [spring-execution-contexts-and-hooks.md](spring-execution-contexts-and-hooks.md) — how `@Async`/`@Scheduled` work on threads outside the Tomcat worker pool.
 - [../system-design/redis-single-threaded.md](../system-design/redis-single-threaded.md) — the same event-loop-over-many-sockets idea, taken to its extreme with a single thread.
+- [latency-percentiles](../system-design/latency-percentiles.md) — why the p99 collapse described above is invisible in mean latency, and how to measure and target it properly.
+- [websockets](../system-design/websockets.md) — what happens when connections stop being short-lived entirely, and why the event loop matters even more there.

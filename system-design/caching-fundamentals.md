@@ -212,3 +212,5 @@ class UserWriteAroundService(private val userRepository: UserRepository) {
 
 A database query walks into a bar. The bartender says, "Cash only."
 - [consistent-hashing](consistent-hashing.md) — how a distributed cache tier decides which node holds a key, and why naive `hash mod serverCount` routing dumps most of the cache on the floor whenever you add a server.
+- [latency-percentiles](../system-design/latency-percentiles.md) — a cache miss is a slower minority code path, which is exactly what shows up as a rising p99 while p50 stays flat.
+- [http-headers](http-headers.md) — `Cache-Control`, `ETag`, `If-None-Match` and the `Vary` header that decides whether a cache serves the right variant.

@@ -159,3 +159,6 @@ That's the whole motivation for **HTTP/3**: run the same stream model over **QUI
 - [reverse-proxy-protocol-termination.md](reverse-proxy-protocol-termination.md) — why HTTP/2 usually stops at the edge and HTTP/1.1 carries on to the app.
 - [load-balancing-l4-vs-l7.md](load-balancing-l4-vs-l7.md) — why HTTP/2's single connection needs an L7, per-request balancer.
 - [caching-fundamentals.md](caching-fundamentals.md) — what the `Cache-Control`/`ETag` machinery HTTP/1.1 introduced is actually used for.
+- [latency-percentiles](latency-percentiles.md) — head-of-line blocking as a tail-latency cause, and how tail latency is actually quantified.
+- [http-headers](http-headers.md) — the individual headers these versions frame, compress and rename.
+- [websockets](websockets.md) — how `Connection: Upgrade` takes over an HTTP/1.1 connection, and why HTTP/2 needed a different mechanism.

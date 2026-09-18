@@ -32,3 +32,7 @@ There's also a breach-blast-radius difference: TOTP's secret is symmetric, so if
 ## Why it's still worth using
 
 TOTP sits in a useful middle tier: far better than SMS-based OTP (no carrier in the loop at all, so it's immune to SIM-swap attacks and cellular interception, and it works fully offline), even though it's weaker than passkeys against real-time phishing.
+
+## See also
+
+- [dev-random-and-entropy](dev-random-and-entropy.md) — where the shared secret's randomness has to come from, and why a predictable secret defeats TOTP entirely.

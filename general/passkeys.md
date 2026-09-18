@@ -50,3 +50,7 @@ A hardware security key keeps the private key on one physical chip forever — m
 ## Real-life analogy
 
 A password is like a secret word you whisper to a bouncer — the venue has to remember that same word too, so if their guest list leaks, or you say it to the wrong doorman by mistake, anyone who has that word can get in as you. A passkey is like a custom lock cut specifically for one building's door, paired with a key that only that lock will ever accept — the building never needs to store a copy of your key, just its own lock design (the public key), and your key doesn't even physically fit a fake lookalike door next door, so there's no way to trick you into using it in the wrong place. And your keychain itself only opens for your fingerprint, so even a stolen keychain doesn't work in someone else's hand.
+
+## See also
+
+- [dev-random-and-entropy](dev-random-and-entropy.md) — the kernel CSPRNG behind keypair generation, and why a device generating keys on first boot is the classic way this goes wrong.
