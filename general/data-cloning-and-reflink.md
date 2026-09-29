@@ -83,11 +83,79 @@ file2 ──► [A][B][C'][D]     ← only C' is new; A, B, D remain shared
 - Only those blocks are copied; the rest of `wallet.ibd` stays shared.
 - The same write also touches `#innodb_redo/*`, doublewrite (`#ib_16384_*.dblwr`), `undo_00*`, and `binlog.*`; each gets new blocks the same way.
 
-### Shared blocks, not shared files
+### Shared blocks, not shared files — the reference count
 
-- The cloned `wallet.ibd` does **not** reference the *path* of the snapshot's `wallet.ibd`.
-- XFS keeps a reference count per block.
-- Deleting or replacing the snapshot file just drops the count; the clone keeps its blocks and stays valid.
+A clone never points at a *file*. It points at *blocks*, and blocks are freed by a counter rather than by a filename. That single fact is what makes the snapshot safe to delete.
+
+**Three levels of indirection.** Reading a file goes through three hops, and a reflink copies only the middle one:
+
+```
+path   /snapshot/mysql/wallet.ibd
+  │      directory entry: name → inode number
+  ▼
+inode  4211
+  │      extent map: "logical blocks 0–255 live at physical blocks 90000–90255"
+  ▼
+physical blocks  [90000 ... 90255]
+```
+
+`cp --reflink` creates a **new inode** for `/dbdata/mysql/wallet.ibd` and copies the *extent map* into it — the list of physical addresses. It copies no data, and it records nowhere that the source was named `wallet.ibd` or lived under `/snapshot`:
+
+```
+inode 4211  (snapshot) ──┐
+                         ├──► blocks 90000–90255
+inode 9877  (devbox)   ──┘
+```
+
+The two inodes are now peers. Neither is "the original" as far as the file system is concerned — there is no parent/child link stored anywhere, just two independent inodes listing the same addresses.
+
+**Where the count lives.** XFS keeps a dedicated on-disk B-tree per allocation group, the **refcount btree** (`refcountbt` — the structure that `reflink=1` at `mkfs` time enables). It maps a block range to the number of inodes currently listing it, and the kernel follows three rules:
+
+| Event | Effect on the refcount btree |
+|---|---|
+| Reflink a range | Increment its count |
+| Write to a range whose count > 1 | Allocate a fresh block, write there, repoint **only the writing inode**, decrement the old range (this *is* copy-on-write) |
+| Delete an inode | Decrement every range it lists; a range returns to the free-space tree only at **0** |
+
+**Worked example.** One snapshot file, cloned to two devboxes, then the snapshot is deleted:
+
+| Step | Inodes listing blocks 90000–90255 | Refcount | Blocks on disk |
+|---|---|---|---|
+| Snapshot built | 4211 | 1 | allocated |
+| `cp --reflink` → devbox A | 4211, 9877 | 2 | same blocks, nothing copied |
+| `cp --reflink` → devbox B | 4211, 9877, 9902 | 3 | same blocks |
+| Devbox A inserts a row (touches block 90007) | A now lists 90000–90006, **204811**, 90008–90255 | 90007 drops to 2, new block 204811 has 1 | one 4 KB block added |
+| `rm` the snapshot file | 9877, 9902 | 2 | **unchanged — still allocated** |
+
+The `rm` is pure metadata: unlink the directory entry, free inode 4211, walk its extent map decrementing counts. Nothing is read, copied or moved, and both devboxes' MySQL instances notice nothing.
+
+![Two inodes sharing one block range at refcount 2; deleting the snapshot decrements it to 1 and the blocks stay allocated](images/data-cloning-block-refcount-eraser.png)
+
+**Replacing** the snapshot is the same story from the other side. If the refresh job writes a *new* file at that path, it gets freshly allocated blocks and the old inode is simply dropped (count `3 → 2`, as above). If it overwrites *in place*, the kernel sees a count above 1 and copy-on-writes — so the **snapshot** is the file that gets new blocks, and the devboxes keep the originals. Either way the clone is untouched, because it owns block addresses, not a relationship to a file.
+
+**Analogy.** Blocks are pallets in a warehouse. Each pallet has a tally card on the rack recording how many order forms currently claim it (**the refcount btree entry**). The snapshot's order form and the devbox's order form both list pallet #7 (**both inodes' extent maps hold the same block address**). Shredding the snapshot's order form (**deleting the snapshot file**) doesn't move or destroy the pallet — the warehouse just ticks the tally from 2 down to 1, because a form still claims it (**the blocks stay allocated**). The pallet is cleared out only when the tally reaches 0 (**the blocks return to the free-space tree**). And the devbox's form says "pallet #7", not "whatever the snapshot's form says" (**a physical address, not a reference to the other file**), so nothing that happens to the other form can invalidate it.
+
+**The contrast that makes it click:**
+
+| Mechanism | What's shared | Delete the source? |
+|---|---|---|
+| Symlink | the *path* | Breaks — dangling link |
+| Hard link | the *inode* | Fine, but it's literally the same file: a write through one is visible through the other |
+| Reflink | the *blocks*, refcounted | Fine, **and** the files stay independent: a write through one is invisible to the other |
+
+A reflink is the useful middle — hard-link-cheap to create, with the independence of a real copy.
+
+**Two consequences worth knowing:**
+
+- **Deleting the snapshot doesn't free the space.** With 20 devboxes cloned off it, `rm -rf` on the snapshot drops every count from 21 to 20 and `df` barely moves. People delete it expecting hundreds of GB back and get nothing.
+- **Refcounting protects a name, not the data.** It guarantees a clone survives deletion of the snapshot; it does nothing about losing the volume they both sit on. Hence "a clone is not a backup" below.
+
+You can observe the sharing directly — `FIEMAP` marks shared extents with `FIEMAP_EXTENT_SHARED`:
+
+```bash
+filefrag -v /dbdata/mysql/wallet.ibd    # extents flagged 'shared'
+xfs_bmap -v /dbdata/mysql/wallet.ibd    # physical ranges — identical to the snapshot's
+```
 
 ## 4. Who does what
 
