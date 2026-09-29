@@ -109,3 +109,4 @@ Message brokers typically guarantee at-least-once delivery, so a compensating ac
 ## See also
 
 - [database-sharding-partitioning-replication](database-sharding-partitioning-replication.md) — sagas are also the answer *inside* one application once a database is sharded, because a transaction can no longer span two shards.
+- [outbox-and-inbox-patterns](outbox-and-inbox-patterns.md) — how each saga step publishes its event without a dual write, so a step can't commit locally and fail to notify the next one.

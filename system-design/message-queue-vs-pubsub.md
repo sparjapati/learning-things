@@ -111,3 +111,7 @@ void onOrder(Long orderId) { ... } // one of N competing listeners gets each mes
 Some systems (Kafka, Redis Streams, and — as above — JMS itself via its queue/topic destination types) combine both ideas — messages are persisted like a queue, and multiple independent consumer groups can each get their own full copy of the stream (broadcast-like), while within a consumer group messages are still distributed one-per-consumer (queue-like). So "queue vs pub/sub" is really about two separate properties — persistence, and one-vs-all delivery — and modern systems mix and match them rather than being purely one or the other.
 
 See also [async-transaction-confirmation.md](async-transaction-confirmation.md) for how a client finds out the result once patterns like these are used to process something asynchronously.
+
+## See also
+
+- [outbox-and-inbox-patterns](outbox-and-inbox-patterns.md) — how a producer gets a message into the broker atomically with its own database change, and why at-least-once delivery forces consumer-side deduplication.

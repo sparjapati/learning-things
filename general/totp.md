@@ -36,3 +36,4 @@ TOTP sits in a useful middle tier: far better than SMS-based OTP (no carrier in 
 ## See also
 
 - [dev-random-and-entropy](dev-random-and-entropy.md) — where the shared secret's randomness has to come from, and why a predictable secret defeats TOTP entirely.
+- [auth-mechanisms-evolution](../system-design/auth-mechanisms-evolution.md) — how TOTP fits into the broader authentication timeline, and what replaced it.

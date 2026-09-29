@@ -54,3 +54,4 @@ A password is like a secret word you whisper to a bouncer — the venue has to r
 ## See also
 
 - [dev-random-and-entropy](dev-random-and-entropy.md) — the kernel CSPRNG behind keypair generation, and why a device generating keys on first boot is the classic way this goes wrong.
+- [auth-mechanisms-evolution](../system-design/auth-mechanisms-evolution.md) — where passkeys sit in the wider evolution from Basic auth through sessions, JWTs, OAuth/OIDC and MFA.

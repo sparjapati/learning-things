@@ -295,3 +295,4 @@ fun recover(log: Path, memory: State) {
 - [idempotency](idempotency.md) — why replaying a log twice has to be safe, which is what per-page LSNs buy.
 - [cap-theorem](cap-theorem.md) — synchronous log shipping to a quorum is where durability meets availability.
 - [async-transaction-confirmation](async-transaction-confirmation.md) — the application-level version of "acknowledge now, make it durable slightly later".
+- [outbox-and-inbox-patterns](outbox-and-inbox-patterns.md) — a CDC-based outbox relay tails exactly this log, which is why replication and event publishing turn out to be the same mechanism.

@@ -42,3 +42,4 @@ Since there's no guaranteed upper bound on how long the async pipeline takes, a 
 ## See also
 
 - [write-ahead-log](write-ahead-log.md) — the same acknowledge-now-persist-shortly-after trade-off, one layer down, inside the database itself.
+- [outbox-and-inbox-patterns](outbox-and-inbox-patterns.md) — the mechanism that makes "commit now, finish the rest shortly after" safe rather than lossy.
