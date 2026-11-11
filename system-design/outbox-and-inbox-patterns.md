@@ -22,6 +22,8 @@ These live in **two different systems** — your database and your broker — an
 
 Both failure modes are *rare* and *silent*, which is the worst combination: they don't show up in testing, and when they do happen in production the data is already inconsistent.
 
+**"But I publish inside `@Transactional` — isn't that atomic?"** No. `@Transactional` binds one database connection. `kafkaTemplate.send()` inside the method talks to a different system that isn't enrolled in that transaction, so the message is on its way, and possibly already consumed, before the database decides whether to commit. If the method throws afterwards, the DB rolls back and the event is a phantom. Kafka's own transactions don't change this: they make several Kafka writes and consumer-offset commits atomic *with each other*, not with PostgreSQL. Chaining a Kafka transaction with a DB transaction (commit one, then the other) only narrows the gap, and a crash between the two commits still produces one of the two failures above.
+
 **Why not just use a distributed transaction (2PC)?** It technically solves this, but it's blocking (a coordinator failure leaves locks held), it's slow, and most modern brokers — Kafka, SQS, RabbitMQ in typical setups — don't support XA with your database in a way anyone wants to operate. The whole industry moved away from it, which is why these two patterns exist.
 
 **Real-life analogy.** A shop clerk must record a sale in the ledger and hand the order slip to the courier. If they give the slip to the courier first and then discover the card was declined (**publish then roll back**), a parcel goes out for a sale that never happened. If they record the sale and then drop dead before reaching the courier (**commit then crash**), the customer is charged and nothing ships. The fix is that the clerk never talks to the courier at all: they write the sale **and** a note in an out-tray, both in the same ledger, in one stroke of the pen (**one database transaction**). A separate runner empties the out-tray whenever they pass (**the relay**). The runner may occasionally deliver the same slip twice, so the courier keeps a list of slip numbers already accepted (**the inbox**) and bins repeats.
@@ -97,6 +99,58 @@ The atomicity is the whole point: recording the ID and doing the work must commi
 
 See [idempotency](idempotency.md) — the inbox is one concrete mechanism for it, and where the operation is *naturally* idempotent (setting a status to a fixed value, an upsert by key) you may not need an inbox table at all.
 
+### The inbox table
+
+```sql
+CREATE TABLE inbox (
+    event_id     UUID PRIMARY KEY,          -- the dedup key: the producer's outbox row ID
+    event_type   VARCHAR(128) NOT NULL,
+    source       VARCHAR(64)  NOT NULL,     -- producing service/topic, if IDs are only unique per source
+    received_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    processed_at TIMESTAMPTZ               -- only needed with the status-based variant below
+);
+```
+
+Inside the transaction, use `INSERT … ON CONFLICT (event_id) DO NOTHING` and check the affected row count (1 = new, do the work; 0 = duplicate, skip). Don't let the insert fail with a unique-violation error. In PostgreSQL that aborts the whole transaction, and you'd need a savepoint to carry on.
+
+### Failure matrix (Kafka consumer + PostgreSQL)
+
+The consumer's order of operations is: **(1)** receive from Kafka → **(2)** `BEGIN` → **(3)** insert inbox row → **(4)** business change → **(5)** `COMMIT` → **(6)** commit Kafka offset.
+
+| Crash / failure point | DB state afterwards | Kafka offset | What happens next | Outcome |
+|---|---|---|---|---|
+| After (1), before (5) — consumer dies mid-transaction | Rolled back: no inbox row, no business change | Not committed | Kafka redelivers to this or another instance; processed normally | ✅ Processed once |
+| Business logic throws in (4) | Rolled back | Not committed | Redelivered; if it fails every time it's a **poison message** → after N attempts send to a dead-letter topic | ✅ No partial effect; needs a DLT for permanent failures |
+| (5) `COMMIT` succeeds, then crash before (6) | Inbox row + business change committed | Not committed | Redelivered → inbox insert conflicts → skip work → commit offset | ✅ Processed once (this is *the* case the inbox exists for) |
+| (6) offset commit fails (rebalance, broker error) | Committed | Not committed | Same as above | ✅ Processed once |
+| Offset committed **before** (5) (auto-commit on, or manual commit too early) | Transaction then fails or crashes | Committed | Message never redelivered | ❌ **Lost.** Commit offsets only after the DB commit |
+| Inbox row and business change in **separate** transactions | Inbox committed, business change lost (or vice versa) | — | Redelivery is skipped as "already seen" (or applied twice) | ❌ Reintroduces the dual write |
+
+Turn Kafka auto-commit off for inbox consumers, or make sure the listener container commits offsets only after the listener method (and its DB transaction) returns successfully.
+
+### Multiple consumer instances
+
+Within one Kafka consumer group, each partition is assigned to one instance at a time, so normally two instances don't process the same message at once. Concurrent duplicates still happen:
+
+- **During a rebalance**, a partition moves from instance A to instance B while A is still mid-transaction on a message it hasn't committed the offset for. B receives the same message.
+- **Two different messages for the same business entity**, e.g. a duplicate event with a different ID (see [idempotency](idempotency.md#message-level-vs-business-level-idempotency)), land on different partitions.
+
+The inbox handles the first case without any extra locking. Both instances try `INSERT INTO inbox (event_id) …` for the same ID, PostgreSQL makes the second **wait** on the first's uncommitted row, and then it either sees a conflict (first committed → skip) or succeeds (first rolled back → process). The unique index is the lock. The second case needs a business-level unique constraint.
+
+### Insert-in-transaction vs a separate claim with statuses
+
+The pattern above inserts the inbox row **in the same transaction as the business change**, with no status column. Some designs instead give the inbox a lifecycle: `RECEIVED → PROCESSING → PROCESSED / FAILED`.
+
+| | Insert within the business transaction | Store first, then claim and process separately |
+|---|---|---|
+| Steps | One transaction: insert inbox row + business change | Txn 1: insert `RECEIVED` and ack Kafka. Txn 2: claim → `PROCESSING`. Work. Txn 3: mark `PROCESSED` |
+| Atomicity of dedup + effect | ✅ Guaranteed by one commit | ❌ Lost. A crash between the work and "mark `PROCESSED`" leaves it unclear whether the work happened |
+| Kafka coupling | Offset held until processing finishes | Kafka acked as soon as the row is stored. The inbox becomes your own durable queue, with its own retries and backoff, and is no longer blocked by one slow message |
+| Work that can't be in a DB txn (external API call) | Doesn't fit | Fits, but the external call must itself be idempotent |
+| Crash recovery | Nothing to recover, it just rolled back | Rows stuck in `PROCESSING` need a **lease** (`claimed_by`, `lease_until`) so another worker can reclaim them, and the reclaimed work may run twice |
+
+**Recovery implications of a separate `PROCESSING` state.** Once "I'm working on it" is committed separately from the work's result, a crash leaves a row saying `PROCESSING` with no owner. That needs exactly the lease and fencing machinery described in [distributed-transactions](distributed-transactions.md#leases), and the work it guards will sometimes run twice. Use the status-based variant only when you need it (external side effects, long processing, decoupling from Kafka), and make the work idempotent at the business level when you do.
+
 ---
 
 ## Together: effectively-once without distributed transactions
@@ -133,6 +187,59 @@ CREATE INDEX ON outbox (created_at) WHERE published_at IS NULL;   -- partial: st
 
 The partial index matters — it covers only the unpublished backlog, so the query stays fast no matter how many rows the table has accumulated.
 
+### Outbox lifecycle: PENDING → PROCESSING → PUBLISHED / DEAD
+
+The `published_at IS NULL` table above is the minimal version. Once several publisher instances, retries and poison events are involved, an explicit status column makes the lifecycle visible:
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: business txn commits
+    PENDING --> PROCESSING: claimed
+    PROCESSING --> PUBLISHED: broker ack
+    PROCESSING --> PENDING: send failed (backoff)
+    PROCESSING --> DEAD: retries exhausted
+    DEAD --> PENDING: manual re-drive
+    PUBLISHED --> [*]: cleanup
+```
+
+One transition the diagram leaves out: a `PROCESSING` row whose lease has expired, because its publisher crashed or stalled, is re-claimed by another publisher and stays `PROCESSING` under a new owner.
+
+Typical extra metadata alongside `id`, `aggregate_type`, `aggregate_id`, `event_type`, `payload`, `created_at`:
+
+| Column | Why |
+|---|---|
+| `status` | `PENDING` / `PROCESSING` / `PUBLISHED` / `DEAD` |
+| `attempts`, `next_attempt_at` | Retry bookkeeping; the claim query only takes rows whose `next_attempt_at <= now()` |
+| `last_error` | The most recent failure, for whoever investigates a `DEAD` row |
+| `claimed_by`, `claimed_at`, `lease_until`, `claim_token` | Multi-instance claiming and crash recovery; see [distributed-transactions](distributed-transactions.md#atomic-claiming) |
+| `published_at` | When the broker acknowledged; used for cleanup and lag metrics |
+| `headers` / `trace_id` | Propagated into the Kafka record so a trace spans producer → consumer |
+
+**Rules that make it correct:**
+
+- **Publish outside the DB transaction, and mark `PUBLISHED` only after the broker ack.** Wait for the send result with `acks=all` for durability. Marking first, then publishing, loses events on a crash. Publishing first, then marking, duplicates them on a crash, which is the acceptable direction.
+- **Retry with exponential backoff and jitter** (`next_attempt_at = now() + min(cap, base × 2^attempts) ± jitter`). A broker outage then doesn't turn every publisher into a tight retry loop.
+- **Classify errors.** Broker unavailable or timeout is retryable. A payload too large for the topic, or one that fails serialization, will fail forever, so send it to `DEAD` immediately instead of burning retries.
+- **Per-aggregate ordering vs retries.** If event 2 for order 42 is published while event 1 sits in backoff, consumers see them out of order. If order matters, make the claim query skip aggregates that have an earlier unpublished event, or publish an aggregate's events serially.
+
+**Where duplicates come from**, so the consumer's inbox is never optional:
+
+1. Crash after the broker ack, before the `PUBLISHED` update. The lease expires and the row is published again.
+2. The broker wrote the record but the ack was lost (a timeout). The publisher retries.
+3. A stale publisher, paused past its lease, sends after another instance already has. See [distributed-transactions](distributed-transactions.md#stale-publishers-and-fencing-tokens).
+4. A manual re-drive of `DEAD` rows that had in fact been published.
+
+Kafka's idempotent producer (`enable.idempotence=true`) removes duplicates caused by *one producer's internal retries* within a session. It doesn't help with 1, 3 or 4, which are separate sends. So the outbox gives **reliable at-least-once publication**, and exactly-once *effect* still depends on the consumer.
+
+**Monitoring and dead events.** Alert on:
+
+- oldest `PENDING` age (publisher lag — the most useful single metric),
+- count of `PROCESSING` rows with an expired lease (crashed or stuck publishers),
+- count of `DEAD` rows (any non-zero value needs a human),
+- publish error rate.
+
+`DEAD` rows are never deleted automatically. They are investigated, fixed (bad payload, missing topic, ACL), and re-driven to `PENDING`.
+
 ### Writing and relaying, in Spring
 
 ```kotlin
@@ -167,6 +274,8 @@ class OutboxRelay(private val outbox: OutboxRepository, private val broker: Mess
 ```
 
 `SKIP LOCKED` is the detail that makes a multi-instance relay safe. Without it, either you run exactly one relay instance (a single point of failure) or two instances publish the same row concurrently.
+
+This relay is deliberately the simplest correct shape. It holds the database transaction, and the row locks, **open across the broker calls**, because the locks only last until commit. That's fine at low volume. Under load, or when the broker is slow, it ties up DB connections and lock time for the duration of network I/O. The production shape is a short **claim transaction** (set `PROCESSING` + lease, commit), then publish outside any transaction, then a conditional `PUBLISHED` update. See [distributed-transactions](distributed-transactions.md#chapter-7-concurrency-control-and-distributed-claiming) for the claim, lease and fencing details.
 
 ### Consuming with an inbox
 
@@ -240,6 +349,10 @@ Rows commit in transaction order, but a relay publishing in parallel can emit th
 | Expecting exactly-once *delivery* | Impossible across a network. Aim for exactly-once *effect* |
 | Assuming global ordering | The relay parallelises; use the aggregate ID as partition key for per-entity order |
 | Large payloads in the outbox | Table bloat and slow replication; publish a reference instead |
+| Marking an outbox row `PUBLISHED` before the broker ack | A crash or failed send loses the event permanently |
+| `PROCESSING` status without a lease | A crashed publisher's rows stay claimed forever |
+| Committing the Kafka offset before the inbox transaction commits | A crash in between loses the message |
+| Retrying non-retryable publish errors forever | A poison event blocks its aggregate and burns resources. Move it to `DEAD` |
 
 ## Key takeaways
 
@@ -254,6 +367,7 @@ Rows commit in transaction order, but a relay publishing in parallel can emit th
 
 ## See also
 
+- [distributed-transactions](distributed-transactions.md) — the hub note: why local transactions don't span services, 2PC, and `SELECT FOR UPDATE` / `SKIP LOCKED` / leases / fencing for multi-instance relays and inbox workers.
 - [idempotency](idempotency.md) — the inbox is one mechanism for it; where an operation is naturally idempotent you may not need the table.
 - [saga-pattern-compensating-transactions](saga-pattern-compensating-transactions.md) — how multi-service workflows stay correct once each step publishes its own events this way.
 - [message-queue-vs-pubsub](message-queue-vs-pubsub.md) — what the relay is publishing into, and why at-least-once is the normal delivery guarantee.
